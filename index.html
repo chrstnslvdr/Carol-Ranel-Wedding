@@ -73,12 +73,11 @@
       <button class="btn btn--primary" data-enter>View wedding details</button>
     </div>
 
-    <!-- Guest invitation card (after picking a name) -->
+    <!-- Invitation card (after picking a name): one answer per guest -->
     <div id="invite" class="paper card invite" hidden>
       <button class="back" id="backBtn" aria-label="Back to search">← Not you?</button>
       <p class="kicker">Dearest</p>
       <h2 id="guestName" class="guest-name">—</h2>
-      <p id="guestMembers" class="members muted"></p>
 
       <div class="seats">
         <div class="seats__ring"><span id="seatCount">0</span></div>
@@ -89,43 +88,28 @@
       </div>
       <div id="seatIcons" class="seat-icons" aria-hidden="true"></div>
 
-      <!-- New answer -->
+      <p class="question" id="question">Who will be celebrating with us?</p>
+      <p class="small muted hint" id="questionHint">Answer for yourself and anyone you know.<br />Leave the rest blank so they can answer themselves.</p>
+      <ul id="people" class="people"></ul>
+
       <div id="rsvpForm">
-        <p class="question">Will you celebrate with us?</p>
-        <div class="choices" role="radiogroup" aria-label="Attendance">
-          <button class="choice" data-choice="yes" role="radio" aria-checked="false">
-            <span class="choice__icon">♥</span>
-            <span>Joyfully<br />accept</span>
-          </button>
-          <button class="choice" data-choice="no" role="radio" aria-checked="false">
-            <span class="choice__icon">✉</span>
-            <span>Regretfully<br />decline</span>
-          </button>
-        </div>
-
-        <div id="countWrap" class="count" hidden>
-          <p class="small">How many of your seats will be used?</p>
-          <div class="stepper">
-            <button type="button" id="minus" aria-label="Fewer">−</button>
-            <output id="attending">1</output>
-            <button type="button" id="plus" aria-label="More">+</button>
-          </div>
-        </div>
-
+        <label class="as">
+          <span class="small">I am</span>
+          <select id="answeredBy" aria-label="Who is answering"></select>
+        </label>
         <label class="note">
           <span class="small">A message for the couple <span class="muted">(optional)</span></span>
           <textarea id="message" rows="2" maxlength="300" placeholder="Your wishes for Carol &amp; Ranel…"></textarea>
         </label>
-
         <p id="formError" class="form-error" role="alert" hidden></p>
         <button id="submitBtn" class="btn btn--primary" disabled>Send my RSVP</button>
         <p class="tiny muted rules">This is an adults-only celebration. Only the guests named on your invitation may attend. Answers are final once sent.</p>
+        <button id="skipBtn" class="link-btn" data-enter hidden>My answer is already in, view wedding details</button>
       </div>
 
-      <!-- Already answered -->
+      <!-- Everyone on this invitation has answered -->
       <div id="replied" class="replied" hidden>
-        <p class="replied__status" id="repliedText"></p>
-        <p class="small muted">Need to change your answer? Please call or message us:</p>
+        <p class="small muted">Need to change an answer? Please call or message us:</p>
         <div class="contacts" data-contacts></div>
         <button class="btn btn--primary" data-enter>View wedding details</button>
       </div>
@@ -294,7 +278,7 @@
     <section class="section my-rsvp reveal">
       <div class="paper card">
         <p class="kicker">Your RSVP</p>
-        <p id="myRsvp"></p>
+        <ul id="myRsvp" class="my-list"></ul>
         <p class="small muted">Need to change something? Call or message us:</p>
         <div class="contacts" data-contacts></div>
       </div>

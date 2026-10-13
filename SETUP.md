@@ -11,21 +11,41 @@ Guest's phone ──search name──▶ Google Apps Script ──reads──▶
 
 ## 1. Google Sheet (guest list + RSVPs)
 
+**One row per person.** Everyone gets their own seat, so each guest is a row.
+
 1. Create a new Google Sheet, e.g. **"Carol & Ranel RSVP"**.
 2. Rename the first tab (bottom left) to exactly **`Guests`**.
-3. Put these headers in **row 1**, one per column:
+3. Put these headers in **row 1**:
 
-   | ID | Invitation Name | Members | Seats | Status | Attending | Message | Responded At |
-   |----|-----------------|---------|-------|--------|-----------|---------|--------------|
+   | ID | Invitation | Guest Name | Status | Answered By | Message | Responded At | Table |
+   |----|------------|------------|--------|-------------|---------|--------------|-------|
 
    *(Or File → Import → upload `google-apps-script/guest-list-template.csv`.)*
-4. Add one row per **invitation**:
-   - **Invitation Name**: what the guest sees, e.g. `Juan & Maria Dela Cruz` or `The Reyes Family`
-   - **Members**: everyone on that invitation, separated by commas, e.g. `Juan Dela Cruz, Maria Dela Cruz`. Guests can search **any** of these names.
-   - **Seats**: number of seats reserved, e.g. `2`
-   - Leave **ID, Status, Attending, Message, Responded At** empty. The website fills them in.
+4. Fill in **Invitation** and **Guest Name** for every guest:
 
-**Changing an answer** (when a guest contacts you): edit their row directly, or **clear the Status cell** so they can answer again on the website.
+   | Invitation | Guest Name |
+   |---|---|
+   | Cristina, RB & Winnie | Cristina Ramos |
+   | Cristina, RB & Winnie | RB Ramos |
+   | Cristina, RB & Winnie | Winnie Tuano |
+   | The Aquino Family | Cecile Aquino |
+   | The Aquino Family | Eric Aquino |
+   | Ana Santos | Ana Santos |
+
+   - **Invitation** groups people who share one invitation. Type it **exactly the same** on each row; guests see it as the title of their card.
+   - Seats = number of names in the invitation (counted automatically).
+   - Leave **ID, Status, Answered By, Message, Responded At** empty. The website fills them in.
+   - **Table**: leave empty for now. When you arrange seating after the RSVPs, type the table number and guests will see it on the site.
+
+**How guests answer**
+- Searching any name opens the shared invitation with every name listed.
+- They can answer for themselves and anyone else on it, and leave the rest for those people to answer later.
+- An answered name is locked. To change it, clear that person's **Status** cell (or type the new answer yourself).
+
+**Handy formulas** (put them in another tab):
+- Attending: `=COUNTIF(Guests!D:D,"Attending")`
+- Not attending: `=COUNTIF(Guests!D:D,"Not attending")`
+- Not answered yet: `=COUNTA(Guests!C2:C)-COUNTA(Guests!D2:D)`
 
 ## 2. Connect the Sheet to the website (Apps Script)
 

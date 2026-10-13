@@ -15,7 +15,7 @@
 
   // ---------- helpers ----------
   const norm = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
-  const loadRsvp = () => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch { return null; } };
+  const loadRsvp = () => { try { const r = JSON.parse(localStorage.getItem(STORAGE_KEY)); return r && r.guests ? r : null; } catch { return null; } };
   const saveRsvp = (r) => { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(r)); } catch {} };
   const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const plural = (n) => (n === 1 ? "" : "s");
@@ -32,20 +32,23 @@
   $$("[data-contacts]").forEach((el) => (el.innerHTML = contactsHtml));
 
   // ---------- data layer: Google Sheet (Apps Script) or demo ----------
-  const demoGuests = (window.GUESTS || []).map((g) => ({ status: "", count: 0, members: [], ...g }));
+  // An invitation ("group") = { invitation, hit, guests: [{ id, name, status, answeredBy, table }] }
+  const ATTENDING = "Attending", NOT_ATTENDING = "Not attending";
+  const demoRows = (window.GUESTS || []).map((g) => ({ status: "", answeredBy: "", table: "", ...g, invitation: g.invitation || g.name }));
+  const demoGroup = (key, hit) => ({ invitation: key, hit, guests: demoRows.filter((r) => r.invitation === key).map((r) => ({ ...r })) });
 
   async function apiSearch(q) {
     if (DEMO) {
       const tokens = norm(q).split(" ").filter(Boolean);
-      return demoGuests
-        .map((g) => {
-          const words = norm([g.name, ...g.members].join(" ")).split(" ");
-          if (!tokens.every((t) => words.some((w) => w.startsWith(t)))) return null;
-          const hit = g.members.find((m) => tokens.every((t) => norm(m).split(" ").some((w) => w.startsWith(t))));
-          return { ...g, hit };
-        })
-        .filter(Boolean)
-        .slice(0, MAX_RESULTS);
+      const matches = (text) => { const words = norm(text).split(" "); return tokens.every((t) => words.some((w) => w.startsWith(t))); };
+      const keys = [...new Set(demoRows.map((r) => r.invitation))];
+      const out = [];
+      for (const key of keys) {
+        const hitRow = demoRows.find((r) => r.invitation === key && matches(r.name));
+        if (hitRow || matches(key)) out.push(demoGroup(key, hitRow ? hitRow.name : null));
+        if (out.length >= MAX_RESULTS) break;
+      }
+      return out;
     }
     const res = await fetch(`${API}?action=search&q=${encodeURIComponent(q)}`);
     const data = await res.json();
@@ -56,12 +59,17 @@
   async function apiRsvp(payload) {
     if (DEMO) {
       await new Promise((r) => setTimeout(r, 600));
-      const g = demoGuests.find((x) => x.id === payload.id);
       if (isClosed()) return { ok: false, code: "closed" };
-      if (g.status) return { ok: false, code: "already", guest: g };
-      g.status = payload.attending ? "Attending" : "Not attending";
-      g.count = payload.attending ? payload.count : 0;
-      return { ok: true, status: g.status, count: g.count, seats: g.seats };
+      const saved = [], skipped = [];
+      payload.answers.forEach((a) => {
+        const row = demoRows.find((r) => r.id === a.id && r.invitation === payload.invitation);
+        if (!row) return;
+        if (row.status) { skipped.push(row.name); return; }
+        row.status = a.attending ? ATTENDING : NOT_ATTENDING;
+        row.answeredBy = payload.answeredBy;
+        saved.push(row.name);
+      });
+      return { ok: true, saved, skipped, group: demoGroup(payload.invitation, null) };
     }
     // text/plain avoids a CORS preflight, which Apps Script doesn't support
     const res = await fetch(API, { method: "POST", body: JSON.stringify(payload) });
@@ -198,7 +206,7 @@
   // ---------- 2. RSVP gate ----------
   const search = $("#search"), results = $("#results"), invite = $("#invite"), thanks = $("#thanks");
   const searchCard = $("#searchCard"), closedCard = $("#closedCard");
-  let current = null, choice = null, count = 1;
+  let current = null;
 
   function showCard(card) {
     [searchCard, closedCard, invite, thanks].forEach((c) => (c.hidden = c !== card));
@@ -245,9 +253,12 @@
       li.setAttribute("role", "option");
       li.tabIndex = 0;
       li.style.animationDelay = `${i * 60}ms`;
-      const sub = g.hit && g.hit !== g.name ? `<span class="r-sub">includes ${escapeHtml(g.hit)}</span>` : "";
-      const badge = g.status ? `<span class="r-seats r-done">Replied</span>` : `<span class="r-seats">${g.seats} seat${plural(g.seats)}</span>`;
-      li.innerHTML = `<span class="r-name">${escapeHtml(g.name)}${sub}</span>${badge}`;
+      const n = g.guests.length, answered = g.guests.filter((x) => x.status).length;
+      const sub = g.hit && g.hit !== g.invitation ? `<span class="r-sub">includes ${escapeHtml(g.hit)}</span>` : "";
+      const badge = answered === n ? `<span class="r-seats r-done">Replied</span>`
+        : answered ? `<span class="r-seats r-part">${answered} of ${n} replied</span>`
+        : `<span class="r-seats">${n} seat${plural(n)}</span>`;
+      li.innerHTML = `<span class="r-name">${escapeHtml(g.invitation)}${sub}</span>${badge}`;
       const open = () => openInvite(g);
       li.addEventListener("click", open);
       li.addEventListener("keydown", (e) => e.key === "Enter" && open());
@@ -255,62 +266,86 @@
     });
   }
 
+  let picks = {}; // guest id -> "yes" | "no"
+
   function openInvite(g) {
     Sound.chime();
-    current = g; choice = null; count = g.seats;
+    current = g; picks = {};
     showCard(invite);
-    $("#guestName").textContent = g.name;
-    $("#guestMembers").textContent = g.members && g.members.length > 1 ? g.members.join(" · ") : "";
-    $("#seatCount").textContent = g.seats;
-    $("#seatPlural").textContent = plural(g.seats);
-    $("#seatIcons").innerHTML = Array.from({ length: g.seats }, (_, i) => `<i style="animation-delay:${.4 + i * .12}s"></i>`).join("");
+    const n = g.guests.length;
+    $("#guestName").textContent = g.invitation;
+    $("#seatCount").textContent = n;
+    $("#seatPlural").textContent = plural(n);
+    $("#seatIcons").innerHTML = g.guests.map((_, i) => `<i style="animation-delay:${.4 + i * .1}s"></i>`).join("");
     $("#formError").hidden = true;
-
-    if (g.status) { showReplied(g); return; }
-
-    $("#rsvpForm").hidden = false; $("#replied").hidden = true;
-    $$(".choice").forEach((b) => b.setAttribute("aria-checked", "false"));
-    $("#countWrap").hidden = true;
     $("#message").value = "";
-    $("#submitBtn").disabled = true;
+
+    const pending = g.guests.filter((x) => !x.status);
+    const allDone = !pending.length;
+    $("#rsvpForm").hidden = allDone;
+    $("#replied").hidden = !allDone;
+    $("#question").textContent = allDone ? "Thank you for your RSVP!" : "Who will be celebrating with us?";
+    $("#questionHint").hidden = allDone || n === 1;
+
+    // who is answering: the searched name, else the first person not yet answered
+    const me = g.hit || pending.concat(g.guests)[0].name;
+    $("#answeredBy").innerHTML = g.guests.map((x) => `<option${x.name === me ? " selected" : ""}>${escapeHtml(x.name)}</option>`).join("");
+    $(".as").hidden = n === 1;
+
+    if (allDone) rememberGroup(g);
+    renderPeople();
   }
 
-  function showReplied(g) {
-    const attending = g.status === "Attending";
-    $("#rsvpForm").hidden = true; $("#replied").hidden = false;
-    $("#repliedText").innerHTML = attending
-      ? `You've already confirmed: <strong>attending</strong>, ${g.count} of ${g.seats} seat${plural(g.seats)}. ♥`
-      : `You've already let us know you <strong>can't attend</strong>. You'll be missed!`;
-    $$("#seatIcons i").forEach((i, idx) => i.classList.toggle("unused", !attending || idx >= g.count));
-    saveRsvp({ id: g.id, name: g.name, seats: g.seats, attending, count: attending ? g.count : 0 });
+  function renderPeople() {
+    const g = current;
+    $("#people").innerHTML = g.guests.map((x) => {
+      const table = x.table ? `<small class="table-no">Table ${escapeHtml(x.table)}</small>` : "";
+      if (x.status) {
+        const yes = x.status === ATTENDING;
+        const by = x.answeredBy && x.answeredBy !== x.name ? `<small>answered by ${escapeHtml(x.answeredBy)}</small>` : "";
+        return `<li class="person done"><span class="person__name">${escapeHtml(x.name)}${table}${by}</span>
+          <span class="badge ${yes ? "badge--yes" : "badge--no"}">${yes ? "✓ Attending" : "Can't attend"}</span></li>`;
+      }
+      const p = picks[x.id];
+      return `<li class="person"><span class="person__name">${escapeHtml(x.name)}${p ? "" : `<small>not answered yet</small>`}</span>
+        <span class="seg" role="radiogroup" aria-label="${escapeHtml(x.name)}">
+          <button data-id="${escapeHtml(x.id)}" data-a="yes" role="radio" aria-checked="${p === "yes"}">Attending</button>
+          <button data-id="${escapeHtml(x.id)}" data-a="no" role="radio" aria-checked="${p === "no"}">Can't attend</button>
+        </span></li>`;
+    }).join("");
+
+    // seats: filled = attending, faded = can't attend, light = not answered
+    $$("#seatIcons i").forEach((el, i) => {
+      const x = g.guests[i], st = x.status ? (x.status === ATTENDING ? "yes" : "no") : picks[x.id];
+      el.className = st === "yes" ? "" : st === "no" ? "unused" : "pending";
+    });
+
+    const count = Object.keys(picks).length;
+    const btn = $("#submitBtn");
+    btn.disabled = !count;
+    btn.textContent = count ? `Send RSVP for ${count} guest${plural(count)}` : "Choose an answer above";
+
+    // let someone whose own answer is already in go straight to the details
+    const me = g.guests.find((x) => x.name === $("#answeredBy").value);
+    $("#skipBtn").hidden = !(me && me.status);
   }
+
+  $("#people").addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-id]");
+    if (!b) return;
+    Sound.tap();
+    const id = b.dataset.id;
+    picks[id] === b.dataset.a ? delete picks[id] : (picks[id] = b.dataset.a); // tap again to clear
+    $("#formError").hidden = true;
+    renderPeople();
+  });
+  $("#answeredBy").addEventListener("change", renderPeople);
 
   $("#backBtn").addEventListener("click", () => {
     Sound.tap();
     showCard(searchCard);
     search.focus();
   });
-
-  function setChoice(c) {
-    choice = c;
-    Sound.tap();
-    $$(".choice").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.choice === c)));
-    $("#countWrap").hidden = !(c === "yes" && current.seats > 1);
-    setCount(count);
-    $("#submitBtn").disabled = false;
-    $("#formError").hidden = true;
-  }
-  $$(".choice").forEach((b) => b.addEventListener("click", () => setChoice(b.dataset.choice)));
-
-  function setCount(n) {
-    count = Math.max(1, Math.min(current.seats, n || 1));
-    $("#attending").textContent = count;
-    $("#minus").disabled = count <= 1;
-    $("#plus").disabled = count >= current.seats;
-    $$("#seatIcons i").forEach((i, idx) => i.classList.toggle("unused", choice === "no" || (choice === "yes" && idx >= count)));
-  }
-  $("#minus").addEventListener("click", () => { Sound.tap(); setCount(count - 1); });
-  $("#plus").addEventListener("click", () => { Sound.tap(); setCount(count + 1); });
 
   function formError(msg) {
     Sound.error();
@@ -320,44 +355,65 @@
   }
 
   $("#submitBtn").addEventListener("click", async () => {
-    if (!choice) return formError("Please choose whether you'll attend.");
+    const ids = Object.keys(picks);
+    if (!ids.length) return formError("Please choose an answer for at least one guest.");
     const btn = $("#submitBtn");
     btn.disabled = true; btn.textContent = "Sending…";
-    const payload = { id: current.id, attending: choice === "yes", count: choice === "yes" ? count : 0, message: $("#message").value.trim() };
+    const payload = {
+      invitation: current.invitation,
+      answeredBy: $("#answeredBy").value,
+      message: $("#message").value.trim(),
+      answers: ids.map((id) => ({ id, attending: picks[id] === "yes" }))
+    };
     let res;
     try { res = await apiRsvp(payload); } catch { res = { ok: false, code: "network" }; }
-    btn.textContent = "Send my RSVP";
 
     if (res.ok) {
-      const r = { id: current.id, name: current.name, seats: current.seats, attending: payload.attending, count: res.count };
-      saveRsvp(r);
-      showThanks(r);
-    } else if (res.code === "already") {
-      Sound.chime(); showReplied({ ...current, ...(res.guest || {}) });
+      current = { ...res.group, hit: current.hit };
+      picks = {};
+      rememberGroup(current);
+      showThanks(current, res);
     } else if (res.code === "closed") {
       showCard(closedCard);
     } else {
-      btn.disabled = false;
+      renderPeople();
       formError("Sorry, we couldn't send your RSVP. Please check your internet and try again.");
     }
   });
 
-  function showThanks(r) {
+  function rememberGroup(g) {
+    saveRsvp({ invitation: g.invitation, guests: g.guests.map(({ name, status, table }) => ({ name, status, table })) });
+  }
+
+  function showThanks(g, res) {
     showCard(thanks);
-    if (r.attending) {
+    const saved = g.guests.filter((x) => res.saved.includes(x.name));
+    const coming = saved.filter((x) => x.status === ATTENDING);
+    const pending = g.guests.filter((x) => !x.status);
+    const lines = [];
+    if (coming.length) lines.push(`<strong>${coming.length}</strong> guest${plural(coming.length)} confirmed: ${coming.map((x) => escapeHtml(x.name)).join(", ")}.`);
+    if (res.skipped && res.skipped.length) lines.push(`<span class="small muted">${res.skipped.map(escapeHtml).join(", ")} had already been answered by someone else.</span>`);
+    if (pending.length) lines.push(`<span class="small muted">${pending.map((x) => escapeHtml(x.name)).join(", ")} can search their name anytime to answer.</span>`);
+
+    if (coming.length) {
       Sound.success(); leafBurst(40);
       $("#thanksIcon").textContent = "♥";
       $("#thanksTitle").textContent = "See you there!";
-      $("#thanksText").innerHTML = `We can't wait to celebrate with you.<br><strong>${r.count} of ${r.seats}</strong> seat${plural(r.seats)} confirmed.`;
+      lines.unshift("We can't wait to celebrate with you.");
     } else {
       Sound.chime();
       $("#thanksIcon").textContent = "✉";
       $("#thanksTitle").textContent = "You'll be missed";
-      $("#thanksText").textContent = "Thank you for letting us know. You'll be in our hearts on our special day.";
+      lines.unshift("Thank you for letting us know. You'll be in our hearts on our special day.");
     }
+    $("#thanksText").innerHTML = lines.join("<br>");
   }
 
-  $$("[data-enter]").forEach((b) => b.addEventListener("click", () => { Sound.tap(); showSite(loadRsvp()); }));
+  $$("[data-enter]").forEach((b) => b.addEventListener("click", () => {
+    Sound.tap();
+    if (current) rememberGroup(current);
+    showSite(loadRsvp());
+  }));
 
   // ---------- 3. main site ----------
   function showSite(r) {
@@ -365,11 +421,13 @@
     document.body.classList.remove("locked");
     window.scrollTo(0, 0);
     const box = $(".my-rsvp");
-    if (!r) { box.hidden = true; return; }
+    if (!r || !r.guests) { box.hidden = true; return; }
     box.hidden = false;
-    $("#myRsvp").innerHTML = r.attending
-      ? `<strong>${escapeHtml(r.name)}</strong><br>Attending · ${r.count} of ${r.seats} seat${plural(r.seats)}`
-      : `<strong>${escapeHtml(r.name)}</strong><br>Unable to attend`;
+    $("#myRsvp").innerHTML = `<li class="my-title">${escapeHtml(r.invitation)}</li>` + r.guests.map((x) => {
+      const st = x.status === ATTENDING ? "✓ Attending" : x.status ? "Can't attend" : "Not answered yet";
+      const table = x.table && x.status === ATTENDING ? ` · Table ${escapeHtml(x.table)}` : "";
+      return `<li><span>${escapeHtml(x.name)}</span><small>${st}${table}</small></li>`;
+    }).join("");
   }
 
   $("#hashtag").addEventListener("click", async (e) => {

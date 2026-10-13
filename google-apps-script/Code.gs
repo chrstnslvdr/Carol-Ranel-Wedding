@@ -1,13 +1,16 @@
 /**
  * Carol & Ranel — RSVP backend (free, runs inside your Google Sheet).
  *
- * Sheet tab "Guests", row 1 headers (any order):
- *   ID | Invitation Name | Members | Seats | Status | Attending | Message | Responded At
+ * Sheet tab "Guests": ONE ROW PER PERSON. Row 1 headers (any order):
+ *   ID | Invitation | Guest Name | Status | Answered By | Message | Responded At | Table
  *
- * - Fill in Invitation Name, Members (comma-separated) and Seats.
- * - Leave ID blank: it is filled in automatically.
- * - Status / Attending / Message / Responded At are written by the website.
- *   To let a guest change their answer, clear their Status cell.
+ * - Invitation: same text for everyone on one invitation. Guests see it as the
+ *   card title, e.g. "The Aquino Family" or "Cristina, RB & Winnie".
+ * - Guest Name: the person's full name (one seat each).
+ * - Table: fill in later when you arrange seating; guests will see it.
+ * - Leave ID blank (filled automatically). Status / Answered By / Message /
+ *   Responded At are written by the website.
+ * - To let someone answer again, clear their Status cell.
  *
  * Deploy: Deploy → New deployment → Web app → Execute as: Me, Who has access: Anyone.
  */
@@ -17,10 +20,12 @@ const DEADLINE = new Date('2026-10-30T23:59:59+08:00');
 const MIN_CHARS = 3;
 const MAX_RESULTS = 5;
 const MAX_MESSAGE = 300;
+const ATTENDING = 'Attending';
+const NOT_ATTENDING = 'Not attending';
 
 const COL = {
-  id: 'ID', name: 'Invitation Name', members: 'Members', seats: 'Seats',
-  status: 'Status', attending: 'Attending', message: 'Message', at: 'Responded At'
+  id: 'ID', invitation: 'Invitation', name: 'Guest Name', status: 'Status',
+  answeredBy: 'Answered By', message: 'Message', at: 'Responded At', table: 'Table'
 };
 
 function doGet(e) {
@@ -35,59 +40,78 @@ function doGet(e) {
 
 function doPost(e) {
   try {
-    const p = JSON.parse(e.postData.contents);
-    return json_(rsvp_(p));
+    return json_(rsvp_(JSON.parse(e.postData.contents)));
   } catch (err) {
     return json_({ ok: false, code: 'error', error: String(err) });
   }
 }
 
-// ---------- search ----------
+// ---------- search: returns matching invitations (max 5) ----------
 function search_(q) {
   const tokens = norm_(q).split(' ').filter(String);
   if (tokens.join('').length < MIN_CHARS) return { ok: true, closed: isClosed_(), results: [] };
 
   let table = read_();
   if (table.rows.some(r => r.name && !r.id)) table = assignIds_();
+
+  const matches = (text) => {
+    const words = norm_(text).split(' ');
+    return tokens.every(t => words.some(w => w.indexOf(t) === 0));
+  };
+
+  const groups = groupRows_(table.rows);
   const results = [];
-  for (const row of table.rows) {
-    if (!row.name) continue;
-    const members = splitMembers_(row.members);
-    const words = norm_([row.name].concat(members).join(' ')).split(' ');
-    const ok = tokens.every(t => words.some(w => w.indexOf(t) === 0));
-    if (!ok) continue;
-    const hit = members.find(m => tokens.every(t => norm_(m).split(' ').some(w => w.indexOf(t) === 0)));
-    results.push(publicRow_(row, hit));
+  for (const key of Object.keys(groups)) {
+    const rows = groups[key];
+    const hitRow = rows.find(r => matches(r.name));
+    if (!hitRow && !matches(key)) continue;
+    results.push(publicGroup_(key, rows, hitRow ? hitRow.name : null));
     if (results.length >= MAX_RESULTS) break;
   }
   return { ok: true, closed: isClosed_(), results: results };
 }
 
-// ---------- rsvp ----------
+// ---------- rsvp: answer some or all names on one invitation ----------
+// payload: { invitation, answeredBy, message, answers: [{ id, attending }] }
 function rsvp_(p) {
   if (isClosed_()) return { ok: false, code: 'closed' };
+  const answers = Array.isArray(p.answers) ? p.answers : [];
+  if (!answers.length) return { ok: false, code: 'empty' };
 
   const lock = LockService.getScriptLock();
   lock.waitLock(15000);
   try {
     const table = read_();
-    const row = table.rows.find(r => String(r.id) === String(p.id));
-    if (!row) return { ok: false, code: 'notfound' };
-    if (row.status) return { ok: false, code: 'already', guest: publicRow_(row) };
+    const key = String(p.invitation || '').trim();
+    const rows = table.rows.filter(r => r.invitation === key && r.name);
+    if (!rows.length) return { ok: false, code: 'notfound' };
 
-    const seats = Number(row.seats) || 1;
-    const attending = p.attending === true || p.attending === 'yes';
-    const count = attending ? Math.max(1, Math.min(seats, parseInt(p.count, 10) || 1)) : 0;
-    const message = safeText_(String(p.message || '').slice(0, MAX_MESSAGE));
+    const answeredBy = rows.some(r => r.name === p.answeredBy) ? p.answeredBy : '';
+    const message = safeText_(String(p.message || '').trim().slice(0, MAX_MESSAGE));
+    const now = new Date();
+    const saved = [], skipped = [];
 
-    const sh = table.sheet, r = row._row, c = table.cols;
-    sh.getRange(r, c.status + 1).setValue(attending ? 'Attending' : 'Not attending');
-    sh.getRange(r, c.attending + 1).setValue(count);
-    sh.getRange(r, c.message + 1).setValue(message);
-    sh.getRange(r, c.at + 1).setValue(new Date());
+    answers.forEach(a => {
+      const row = rows.find(r => String(r.id) === String(a.id));
+      if (!row || saved.indexOf(row) >= 0) return;
+      if (row.status) { skipped.push(row.name); return; } // someone already answered for them
+      row.status = a.attending ? ATTENDING : NOT_ATTENDING;
+      row.answeredBy = answeredBy;
+      saved.push(row);
+    });
+
+    // keep the message once: on the answerer's row if they answered now, else the first saved row
+    const msgRow = saved.find(r => r.name === answeredBy) || saved[0];
+    const c = table.cols, sh = table.sheet;
+    saved.forEach(row => {
+      sh.getRange(row._row, c.status + 1).setValue(row.status);
+      sh.getRange(row._row, c.answeredBy + 1).setValue(answeredBy);
+      sh.getRange(row._row, c.at + 1).setValue(now);
+      if (row === msgRow && message) sh.getRange(row._row, c.message + 1).setValue(message);
+    });
     SpreadsheetApp.flush();
 
-    return { ok: true, status: attending ? 'Attending' : 'Not attending', count: count, seats: seats };
+    return { ok: true, saved: saved.map(r => r.name), skipped: skipped, group: publicGroup_(key, rows, null) };
   } finally {
     lock.releaseLock();
   }
@@ -111,8 +135,8 @@ function read_() {
     const v = values[i];
     const row = { _row: i + 1 };
     Object.keys(cols).forEach(k => row[k] = v[cols[k]]);
-    row.name = String(row.name || '').trim();
-    row.status = String(row.status || '').trim();
+    ['invitation', 'name', 'status', 'answeredBy', 'table'].forEach(k => row[k] = String(row[k] || '').trim());
+    if (!row.invitation) row.invitation = row.name; // a guest alone on their invitation
     rows.push(row);
   }
   return { sheet: sheet, cols: cols, rows: rows };
@@ -137,20 +161,23 @@ function assignIds_() {
   }
 }
 
-function publicRow_(row, hit) {
-  return {
-    id: String(row.id),
-    name: row.name,
-    members: splitMembers_(row.members),
-    seats: Number(row.seats) || 1,
-    status: row.status,
-    count: Number(row.attending) || 0,
-    hit: hit || null
-  };
+function groupRows_(rows) {
+  const groups = {};
+  rows.forEach(r => {
+    if (!r.name) return;
+    (groups[r.invitation] = groups[r.invitation] || []).push(r);
+  });
+  return groups;
 }
 
-function splitMembers_(s) {
-  return String(s || '').split(/[,;\n]/).map(x => x.trim()).filter(String);
+function publicGroup_(key, rows, hit) {
+  return {
+    invitation: key,
+    hit: hit,
+    guests: rows.map(r => ({
+      id: String(r.id), name: r.name, status: r.status, answeredBy: r.answeredBy, table: r.table
+    }))
+  };
 }
 
 function norm_(s) {

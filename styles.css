@@ -205,24 +205,6 @@ h2.script { font-size: clamp(2.4rem, 9vw, 3.4rem); color: var(--bark); line-heig
 @keyframes pop { from { opacity: 0; transform: scale(.3); } to { opacity: 1; transform: none; } }
 
 .question { font-family: var(--serif); font-style: italic; font-size: 1.3rem; margin: .4rem 0 .9rem; color: var(--bark); }
-.choices { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.choice {
-  display: flex; flex-direction: column; align-items: center; gap: 6px;
-  padding: 16px 8px; border-radius: 14px; background: #fff; border: 1.5px solid var(--latte);
-  font-size: .82rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; line-height: 1.3;
-  transition: all .25s;
-}
-.choice__icon { font-size: 1.5rem; color: var(--caramel); transition: transform .3s; }
-.choice[aria-checked="true"] { background: var(--walnut); border-color: var(--walnut); color: var(--cream); transform: translateY(-2px); box-shadow: 0 8px 18px rgba(123, 82, 50, .35); }
-.choice[aria-checked="true"] .choice__icon { color: var(--cream); transform: scale(1.25); }
-.choice[data-choice="no"][aria-checked="true"] { background: var(--muted); border-color: var(--muted); }
-
-.count { margin-top: 1.1rem; animation: fadeUp .4s both; }
-.count p { margin: 0 0 .5rem; }
-.stepper { display: inline-flex; align-items: center; gap: 4px; background: #fff; border: 1.5px solid var(--latte); border-radius: 999px; padding: 4px; }
-.stepper button { width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--cream); font-size: 1.4rem; color: var(--walnut); }
-.stepper button:disabled { opacity: .35; }
-.stepper output { min-width: 48px; font-family: var(--serif); font-size: 1.6rem; font-weight: 600; color: var(--bark); }
 
 .note { display: block; text-align: left; margin: 1.2rem 0 1rem; }
 .note textarea {
@@ -413,3 +395,46 @@ h2.script { font-size: clamp(2.4rem, 9vw, 3.4rem); color: var(--bark); line-heig
   .ent-group p { font-size: .98rem; }
   .ent-cols { gap: 4px 10px; }
 }
+
+/* ============ Per-guest RSVP ============ */
+.hint { margin: -.4rem 0 1rem; line-height: 1.5; }
+.people { list-style: none; margin: 0 0 1rem; padding: 0; text-align: left; display: grid; gap: 8px; }
+.person {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+  padding: 12px 12px 12px 14px; border-radius: 14px; background: #fff; border: 1px solid rgba(207, 176, 138, .6);
+  animation: fadeUp .35s both;
+}
+.person.done { background: rgba(255, 255, 255, .55); }
+.person__name { flex: 1 1 140px; font-family: var(--serif); font-weight: 600; font-size: 1.15rem; color: var(--bark); line-height: 1.2; }
+.person__name small { display: block; font-family: var(--sans); font-weight: 400; font-size: .74rem; color: var(--muted); margin-top: 2px; }
+.person__name .table-no { color: var(--walnut); font-weight: 700; letter-spacing: .06em; }
+.seg { display: inline-flex; flex: none; background: var(--cream); border-radius: 999px; padding: 3px; gap: 2px; }
+.seg button {
+  border: 0; background: transparent; border-radius: 999px; padding: 9px 12px; min-height: 40px;
+  font-size: .74rem; font-weight: 700; letter-spacing: .04em; color: var(--walnut); transition: background .2s, color .2s, transform .15s;
+}
+.seg button[aria-checked="true"][data-a="yes"] { background: var(--walnut); color: var(--cream); box-shadow: 0 3px 8px rgba(123, 82, 50, .3); }
+.seg button[aria-checked="true"][data-a="no"] { background: var(--muted); color: var(--cream); }
+.seg button:active { transform: scale(.95); }
+.badge { flex: none; font-size: .72rem; font-weight: 700; letter-spacing: .05em; padding: 6px 11px; border-radius: 999px; }
+.badge--yes { background: var(--olive); color: var(--cream); }
+.badge--no { background: #e7ddd2; color: var(--muted); }
+
+.as { display: flex; align-items: center; gap: 10px; text-align: left; margin: .2rem 0 0; }
+.as select {
+  flex: 1; min-width: 0; padding: 11px 36px 11px 12px; font: 400 1rem var(--sans); color: var(--ink);
+  background: #fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' stroke='%23a87b51' stroke-width='1.6' fill='none'/></svg>") right 12px center/12px no-repeat;
+  border: 1.5px solid var(--latte); border-radius: 12px; -webkit-appearance: none; appearance: none; outline: none;
+}
+.as select:focus { border-color: var(--walnut); }
+.link-btn { display: block; margin: 1rem auto 0; background: none; border: 0; color: var(--walnut); font-size: .85rem; text-decoration: underline; text-underline-offset: 3px; padding: 6px; }
+
+.results .r-part { background: var(--latte); color: var(--bark); }
+.seat-icons i.pending { opacity: .4 !important; filter: grayscale(.6); }
+
+.my-list { list-style: none; padding: 0; margin: .4rem 0 1rem; text-align: left; }
+.my-list li { display: flex; justify-content: space-between; gap: 10px; padding: 8px 2px; border-bottom: 1px dashed rgba(123, 82, 50, .25); font-family: var(--serif); font-size: 1.1rem; }
+.my-list li small { font-family: var(--sans); font-size: .78rem; color: var(--walnut); white-space: nowrap; }
+.my-list .my-title { justify-content: center; border: 0; font-weight: 600; font-size: 1.3rem; color: var(--bark); }
+/* revealed blocks sit above the falling leaves */
+.reveal { position: relative; z-index: 6; }

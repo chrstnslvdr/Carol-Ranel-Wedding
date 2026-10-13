@@ -1,4 +1,7 @@
-ID,Invitation Name,Members,Seats,Status,Attending,Message,Responded At
-,Juan Dela Cruz,"Juan Dela Cruz, Maria Dela Cruz",2,,,,
-,Ana Santos,Ana Santos,1,,,,
-,The Reyes Family,"Pedro Reyes, Liza Reyes, Miguel Reyes",3,,,,
+ID,Invitation,Guest Name,Status,Answered By,Message,Responded At,Table
+,"Cristina, RB & Winnie",Cristina Ramos,,,,,
+,"Cristina, RB & Winnie",RB Ramos,,,,,
+,"Cristina, RB & Winnie",Winnie Tuano,,,,,
+,The Aquino Family,Cecile Aquino,,,,,
+,The Aquino Family,Eric Aquino,,,,,
+,Ana Santos,Ana Santos,,,,,
