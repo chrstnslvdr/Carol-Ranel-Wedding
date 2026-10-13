@@ -430,6 +430,13 @@
     }).join("");
   }
 
+  $("#anotherBtn").addEventListener("click", () => {
+    Sound.tap();
+    current = null;
+    search.value = ""; results.innerHTML = "";
+    showGate();
+  });
+
   $("#hashtag").addEventListener("click", async (e) => {
     const btn = e.currentTarget;
     try { await navigator.clipboard.writeText("#CarolAndRanelWedding"); } catch {}
@@ -455,5 +462,11 @@
   }
   tickCountdown(); setInterval(tickCountdown, 1000);
 
-  if (DEMO) console.info("[RSVP] Demo mode — set scriptUrl in config.js to use the Google Sheet.");
+  if (DEMO) {
+    console.info("[RSVP] Demo mode — set scriptUrl in config.js to use the Google Sheet.");
+    const tag = document.createElement("div");
+    tag.className = "demo-tag";
+    tag.textContent = "Demo mode · sample names · answers are not saved";
+    document.body.appendChild(tag);
+  }
 })();
