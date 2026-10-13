@@ -4,11 +4,11 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Carol &amp; Ranel</title>
-  <meta name="description" content="Carol & Ranel are getting married. Find your name and kindly RSVP." />
+  <meta name="description" content="Carol Aquino & Ranel Banta · November 14, 2026 · Find your name and kindly RSVP." />
   <meta name="theme-color" content="#4a3426" />
-  <meta property="og:title" content="Carol & Ranel — We're getting married" />
-  <meta property="og:description" content="Find your name and kindly RSVP." />
-  <meta property="og:image" content="assets/photos/photo-1.jpg" />
+  <meta property="og:title" content="Carol & Ranel — November 14, 2026" />
+  <meta property="og:description" content="You are invited. Find your name and kindly RSVP." />
+  <meta property="og:image" content="https://carol-and-ranel.netlify.app/assets/photos/photo-1.jpg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Great+Vibes&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
@@ -22,7 +22,7 @@
   <!-- ========== 1. INTRO / ENVELOPE ========== -->
   <section id="intro" class="intro" aria-label="Invitation">
     <div class="intro__inner">
-      <p class="intro__kicker">Together with their families</p>
+      <p class="intro__kicker">You are invited to the wedding of</p>
       <div class="envelope" id="envelope">
         <div class="envelope__back"></div>
         <div class="envelope__letter">
@@ -42,22 +42,38 @@
 
   <!-- ========== 2. RSVP GATE ========== -->
   <section id="gate" class="gate" aria-label="Find your invitation" hidden>
-    <div class="paper card gate__card reveal">
+
+    <!-- Search -->
+    <div id="searchCard" class="paper card gate__card reveal">
       <div class="twig" aria-hidden="true"></div>
-      <p class="kicker">Before anything else</p>
+      <p class="kicker">Please confirm your attendance</p>
       <h1 class="script gate__title">Find your name</h1>
-      <p class="muted">Type your first or last name to find your invitation.</p>
+      <p class="muted">Type your first or last name to find your invitation and the seats reserved for you.</p>
 
       <div class="search">
         <svg class="search__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 3a7.5 7.5 0 0 1 5.96 12.06l4.24 4.24-1.4 1.4-4.24-4.24A7.5 7.5 0 1 1 10.5 3Zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11Z"/></svg>
         <input id="search" type="search" inputmode="search" autocomplete="off" autocapitalize="words"
                placeholder="e.g. Juan Dela Cruz" aria-label="Search your name" />
       </div>
-      <ul id="results" class="results" role="listbox" aria-label="Matching guests"></ul>
-      <p id="searchHelp" class="help muted">Can't find your name? Message Carol or Ranel directly and we'll sort it out.</p>
+      <ul id="results" class="results" role="listbox" aria-label="Matching guests" aria-live="polite"></ul>
+      <p class="deadline">Kindly RSVP on or before <strong>October 30, 2026</strong></p>
+      <div class="help">
+        <p class="muted">Can't find your name? Call or message us:</p>
+        <div class="contacts" data-contacts></div>
+      </div>
     </div>
 
-    <!-- Guest invitation card (shown after picking a name) -->
+    <!-- RSVP closed (after deadline) -->
+    <div id="closedCard" class="paper card" hidden>
+      <div class="twig" aria-hidden="true"></div>
+      <p class="kicker">RSVP is now closed</p>
+      <h1 class="script gate__title">Thank you</h1>
+      <p>Online RSVP closed on October 30, 2026. If you haven't confirmed yet, please call or message us:</p>
+      <div class="contacts" data-contacts></div>
+      <button class="btn btn--primary" data-enter>View wedding details</button>
+    </div>
+
+    <!-- Guest invitation card (after picking a name) -->
     <div id="invite" class="paper card invite" hidden>
       <button class="back" id="backBtn" aria-label="Back to search">← Not you?</button>
       <p class="kicker">Dearest</p>
@@ -73,34 +89,46 @@
       </div>
       <div id="seatIcons" class="seat-icons" aria-hidden="true"></div>
 
-      <p class="question">Will you celebrate with us?</p>
-      <div class="choices" role="radiogroup" aria-label="Attendance">
-        <button class="choice" data-choice="yes" role="radio" aria-checked="false">
-          <span class="choice__icon">♥</span>
-          <span>Joyfully<br />accept</span>
-        </button>
-        <button class="choice" data-choice="no" role="radio" aria-checked="false">
-          <span class="choice__icon">✉</span>
-          <span>Regretfully<br />decline</span>
-        </button>
-      </div>
-
-      <div id="countWrap" class="count" hidden>
-        <p class="small">How many of your seats will be used?</p>
-        <div class="stepper">
-          <button type="button" id="minus" aria-label="Fewer">−</button>
-          <output id="attending">1</output>
-          <button type="button" id="plus" aria-label="More">+</button>
+      <!-- New answer -->
+      <div id="rsvpForm">
+        <p class="question">Will you celebrate with us?</p>
+        <div class="choices" role="radiogroup" aria-label="Attendance">
+          <button class="choice" data-choice="yes" role="radio" aria-checked="false">
+            <span class="choice__icon">♥</span>
+            <span>Joyfully<br />accept</span>
+          </button>
+          <button class="choice" data-choice="no" role="radio" aria-checked="false">
+            <span class="choice__icon">✉</span>
+            <span>Regretfully<br />decline</span>
+          </button>
         </div>
+
+        <div id="countWrap" class="count" hidden>
+          <p class="small">How many of your seats will be used?</p>
+          <div class="stepper">
+            <button type="button" id="minus" aria-label="Fewer">−</button>
+            <output id="attending">1</output>
+            <button type="button" id="plus" aria-label="More">+</button>
+          </div>
+        </div>
+
+        <label class="note">
+          <span class="small">A message for the couple <span class="muted">(optional)</span></span>
+          <textarea id="message" rows="2" maxlength="300" placeholder="Your wishes for Carol &amp; Ranel…"></textarea>
+        </label>
+
+        <p id="formError" class="form-error" role="alert" hidden></p>
+        <button id="submitBtn" class="btn btn--primary" disabled>Send my RSVP</button>
+        <p class="tiny muted rules">This is an adults-only celebration. Only the guests named on your invitation may attend. Answers are final once sent.</p>
       </div>
 
-      <label class="note">
-        <span class="small">A message for the couple <span class="muted">(optional)</span></span>
-        <textarea id="message" rows="2" maxlength="300" placeholder="Wishes, song requests, allergies…"></textarea>
-      </label>
-
-      <button id="submitBtn" class="btn btn--primary" disabled>Send my RSVP</button>
-      <p class="tiny muted">Seats are reserved by name. Kindly do not bring additional guests.</p>
+      <!-- Already answered -->
+      <div id="replied" class="replied" hidden>
+        <p class="replied__status" id="repliedText"></p>
+        <p class="small muted">Need to change your answer? Please call or message us:</p>
+        <div class="contacts" data-contacts></div>
+        <button class="btn btn--primary" data-enter>View wedding details</button>
+      </div>
     </div>
 
     <!-- Thank-you -->
@@ -108,7 +136,7 @@
       <div class="thanks__icon" id="thanksIcon">♥</div>
       <h2 class="script" id="thanksTitle">Thank you!</h2>
       <p id="thanksText"></p>
-      <button id="enterBtn" class="btn btn--primary">View our wedding details</button>
+      <button class="btn btn--primary" data-enter>View our wedding details</button>
     </div>
   </section>
 
@@ -120,16 +148,16 @@
         <img src="assets/photos/photo-1.jpg" alt="Carol and Ranel" data-placeholder="Photo 1 · Hero" />
       </div>
       <div class="hero__text">
-        <p class="kicker light">We're getting married</p>
+        <p class="kicker light">Aquino · Banta</p>
         <h1 class="hero__names"><span class="script">Carol</span><span class="amp">&amp;</span><span class="script">Ranel</span></h1>
-        <p class="hero__date">Saturday · 12 December 2026</p>
-        <p class="hero__place">Tagaytay, Philippines</p>
+        <p class="hero__date">Saturday · November 14, 2026</p>
+        <p class="hero__place">Mandaluyong City</p>
       </div>
       <a href="#countdown" class="scroll-cue" aria-label="Scroll down"><span></span></a>
     </header>
 
     <section id="countdown" class="section countdown reveal">
-      <p class="kicker">Counting down</p>
+      <p class="kicker">Counting down to forever</p>
       <div class="timer">
         <div><b id="cdD">00</b><small>days</small></div>
         <div><b id="cdH">00</b><small>hours</small></div>
@@ -140,12 +168,12 @@
 
     <section class="section story">
       <div class="story__photo reveal">
-        <img src="assets/photos/photo-2.jpg" alt="Carol and Ranel" data-placeholder="Photo 2 · Our story" />
+        <img src="assets/photos/photo-2.jpg" alt="Carol and Ranel" data-placeholder="Photo 2" />
       </div>
       <div class="story__text reveal">
-        <p class="kicker">Our story</p>
-        <h2 class="script">How it began</h2>
-        <p>[Placeholder] A short, sweet paragraph about how Carol and Ranel met, the first date, and the proposal. Two or three sentences reads best on a phone.</p>
+        <p class="kicker">With our closest loved ones</p>
+        <h2 class="script">An intimate celebration</h2>
+        <p>We're keeping our wedding intimate and celebrating with our closest family and loved ones. Thank you for being part of our special day — we're so excited to celebrate with you!</p>
       </div>
     </section>
 
@@ -156,74 +184,126 @@
         <article class="paper detail reveal">
           <div class="detail__icon">⛪</div>
           <h3>Ceremony</h3>
-          <p class="detail__time">2:00 PM</p>
-          <p>[Church / venue name]<br />[Address]</p>
-          <a class="btn btn--ghost" href="#" target="_blank" rel="noopener">Open in Maps</a>
+          <p class="detail__time">2:30 PM</p>
+          <p><strong>San Felipe Neri Parish Church</strong><br />Boni Avenue, 1550 Rt. Rev. G. Aglipay,<br />Mandaluyong City</p>
+          <a class="btn btn--ghost" href="https://www.google.com/maps/search/?api=1&query=San+Felipe+Neri+Parish+Church+Boni+Avenue+Mandaluyong+City" target="_blank" rel="noopener">Open in Maps</a>
         </article>
         <article class="paper detail reveal">
           <div class="detail__icon">🥂</div>
           <h3>Reception</h3>
           <p class="detail__time">5:00 PM</p>
-          <p>[Reception venue]<br />[Address]</p>
-          <a class="btn btn--ghost" href="#" target="_blank" rel="noopener">Open in Maps</a>
+          <p><strong>The Secret Garden</strong><br />Barangka Dr. Busilak St.,<br />Mandaluyong City</p>
+          <p class="small muted">Reception to follow immediately after the ceremony.</p>
+          <a class="btn btn--ghost" href="https://www.google.com/maps/search/?api=1&query=The+Secret+Garden+Barangka+Drive+Mandaluyong+City" target="_blank" rel="noopener">Open in Maps</a>
         </article>
       </div>
     </section>
 
-    <section class="section timeline">
-      <p class="kicker reveal">Order of the day</p>
-      <h2 class="script reveal">Program</h2>
-      <ol class="tl">
-        <li class="reveal"><time>2:00 PM</time><span>Ceremony</span></li>
-        <li class="reveal"><time>3:30 PM</time><span>Photos &amp; merienda</span></li>
-        <li class="reveal"><time>5:00 PM</time><span>Reception &amp; dinner</span></li>
-        <li class="reveal"><time>7:00 PM</time><span>First dance &amp; program</span></li>
-        <li class="reveal"><time>9:00 PM</time><span>Send-off</span></li>
-      </ol>
+    <section class="section entourage">
+      <p class="kicker reveal">Aquino · Banta</p>
+      <h2 class="script reveal">Our entourage</h2>
+
+      <div class="ent-group reveal">
+        <h3>Principal Sponsors</h3>
+        <div class="ent-cols">
+          <p>Coun. Mr. Danny De Guzman<br />Mr. Jon Salang</p>
+          <p>Mrs. Mila Panen<br />Mrs. Esther Valencia</p>
+        </div>
+      </div>
+      <div class="ent-cols reveal">
+        <div class="ent-group"><h3>Best Man</h3><p>Mr. Richard Valencia</p></div>
+        <div class="ent-group"><h3>Brother of the Bride</h3><p>Mr. Raymundo Aquino</p></div>
+      </div>
+      <div class="ent-cols reveal">
+        <div class="ent-group"><h3>Matron of Honor</h3><p>Mrs. Karla Mae Salvador-Macalanda</p></div>
+        <div class="ent-group"><h3>Maid of Honor</h3><p>Ms. Christine Salvador</p></div>
+      </div>
+      <div class="ent-cols reveal">
+        <div class="ent-group"><h3>Veil</h3><p>Ms. Arlene Macaraeg<br />Mr. Nico Macaraeg</p></div>
+        <div class="ent-group"><h3>Cord</h3><p>Mrs. Cecile Aquino<br />Mr. Eric Aquino</p></div>
+      </div>
+      <div class="ent-cols reveal">
+        <div class="ent-group"><h3>Candle</h3><p>Ms. Joyce Aquino<br />Mr. Kaizer Macalanda</p></div>
+        <div class="ent-group"><h3>Coin Bearer</h3><p>Mr. Carlos Magalong</p></div>
+      </div>
+      <div class="ent-cols reveal">
+        <div class="ent-group"><h3>Ring Bearer</h3><p>Mr. Khalifa Drake Medel</p></div>
+        <div class="ent-group"><h3>Bible Bearer</h3><p>Mr. Reynald Aquino</p></div>
+      </div>
     </section>
 
-    <section class="section attire reveal">
-      <p class="kicker">Dress code</p>
-      <h2 class="script">Rustic formal</h2>
-      <p>We'd love to see you in earthy tones.</p>
-      <div class="swatches">
-        <span style="--c:#4a3426" title="Espresso"></span>
-        <span style="--c:#7b5232" title="Walnut"></span>
-        <span style="--c:#a87b51" title="Caramel"></span>
-        <span style="--c:#cfb08a" title="Latte"></span>
-        <span style="--c:#e9dcc6" title="Cream"></span>
-        <span style="--c:#6b6f4e" title="Olive"></span>
+    <section class="section attire">
+      <p class="kicker reveal">What to wear</p>
+      <h2 class="script reveal">Dress code</h2>
+      <div class="swatches reveal">
+        <span style="--c:#efe6e3" title="Blush cream"></span>
+        <span style="--c:#c08a7c" title="Rose brown"></span>
+        <span style="--c:#6b4134" title="Chocolate"></span>
+        <span style="--c:#2f211c" title="Espresso"></span>
       </div>
-      <p class="small muted">Please avoid white — that's for the bride.</p>
+      <div class="attire-grid">
+        <article class="paper attire-card reveal">
+          <h3>Female Guests</h3>
+          <p>A formal dress or formal outfit in colors that match our wedding theme.</p>
+        </article>
+        <article class="paper attire-card reveal">
+          <h3>Male Guests</h3>
+          <p>A long-sleeved polo or formal polo shirt in colors that match our wedding theme.</p>
+        </article>
+        <article class="paper attire-card reveal">
+          <h3>Female Entourage</h3>
+          <p>A floor-length formal dress in a light brown shade.</p>
+        </article>
+        <article class="paper attire-card reveal">
+          <h3>Male Entourage</h3>
+          <p>A long-sleeved formal coat in light brown or black shades.</p>
+        </article>
+      </div>
     </section>
 
     <section class="section gallery">
       <div class="gallery__photo reveal">
-        <img src="assets/photos/photo-3.jpg" alt="Carol and Ranel" data-placeholder="Photo 3 · Closing" />
+        <img src="assets/photos/photo-3.jpg" alt="Carol and Ranel" data-placeholder="Photo 3" />
       </div>
+    </section>
+
+    <section class="section notes">
+      <article class="paper detail reveal">
+        <div class="detail__icon">🎁</div>
+        <h3>Gift Note</h3>
+        <p>Your presence is the greatest gift we could ask for.</p>
+        <p>If you wish to bless us with a gift, we would truly appreciate it. Most of all, thank you for celebrating this special day with us and for being part of our journey.</p>
+      </article>
+      <article class="paper detail reveal">
+        <div class="detail__icon">📷</div>
+        <h3>Snap &amp; Share</h3>
+        <p>We'd love to see your favorite moments from our special day! Tag us and use our wedding hashtag:</p>
+        <button class="hashtag" id="hashtag" aria-label="Copy hashtag">#CarolAndRanelWedding <span>copy</span></button>
+      </article>
     </section>
 
     <section class="section faq">
       <p class="kicker reveal">Good to know</p>
       <h2 class="script reveal">Questions</h2>
-      <details class="reveal"><summary>Can I bring a plus one?</summary><p>We've reserved a specific number of seats for you, shown on your RSVP. Kindly keep to that number.</p></details>
-      <details class="reveal"><summary>Are kids welcome?</summary><p>[Placeholder answer]</p></details>
-      <details class="reveal"><summary>Is there parking?</summary><p>[Placeholder answer]</p></details>
-      <details class="reveal"><summary>Gift guide</summary><p>[Placeholder — your presence is the greatest gift…]</p></details>
+      <details class="reveal"><summary>Can I bring a plus one?</summary><p>We're keeping our wedding intimate, so we kindly ask that only the guests named on your invitation join us. Your reserved seats are shown on your RSVP.</p></details>
+      <details class="reveal"><summary>Are kids welcome?</summary><p>This will be an adults-only celebration. We hope you understand as we keep the celebration small.</p></details>
+      <details class="reveal"><summary>Can I change my RSVP?</summary><p>Please call or message Karla or Ranel and they'll update it for you.</p></details>
+      <details class="reveal"><summary>What time should I arrive?</summary><p>The ceremony starts at 2:30 PM at San Felipe Neri Parish Church. The reception follows immediately after at The Secret Garden.</p></details>
     </section>
 
     <section class="section my-rsvp reveal">
       <div class="paper card">
         <p class="kicker">Your RSVP</p>
         <p id="myRsvp"></p>
-        <button id="changeBtn" class="btn btn--ghost">Change my answer</button>
+        <p class="small muted">Need to change something? Call or message us:</p>
+        <div class="contacts" data-contacts></div>
       </div>
     </section>
 
     <footer class="footer">
       <p class="script">Carol &amp; Ranel</p>
-      <p class="small">12 · 12 · 2026</p>
-      <p class="tiny">#CarolAndRanelForever</p>
+      <p class="small">11 · 14 · 2026</p>
+      <p class="tiny">#CarolAndRanelWedding</p>
     </footer>
   </main>
 
@@ -232,14 +312,8 @@
     <span class="music__bars"><i></i><i></i><i></i><i></i></span>
   </button>
 
-  <!-- Netlify Forms: hidden form so Netlify detects the fields at deploy (free tier) -->
-  <form name="rsvp" netlify netlify-honeypot="bot-field" hidden>
-    <input name="bot-field" />
-    <input name="guest_id" /><input name="guest_name" /><input name="seats_reserved" />
-    <input name="attending" /><input name="attending_count" /><textarea name="message"></textarea>
-  </form>
-
-  <script src="guests.js"></script>
+  <script src="config.js"></script>
+  <script src="demo-guests.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

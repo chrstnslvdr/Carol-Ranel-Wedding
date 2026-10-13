@@ -1,6 +1,5 @@
-// SAMPLE GUEST LIST — replace with the real list.
-// One entry per invitation. `seats` = number of seats reserved for that invitation.
-// `members` (optional) lists who the seats are for, so families can search any member's name.
+// DEMO GUEST LIST — used only while config.js has no scriptUrl.
+// The real guest list lives in the Google Sheet (see SETUP.md).
 window.GUESTS = [
   { id: "g001", name: "Juan Dela Cruz", members: ["Juan Dela Cruz", "Maria Dela Cruz"], seats: 2 },
   { id: "g002", name: "Ana Santos", seats: 1 },
@@ -9,5 +8,5 @@ window.GUESTS = [
   { id: "g005", name: "Grace Bautista", seats: 1 },
   { id: "g006", name: "Ramon Garcia", members: ["Ramon Garcia", "Celia Garcia", "Paolo Garcia"], seats: 3 },
   { id: "g007", name: "Kristine Mendoza", seats: 1 },
-  { id: "g008", name: "Jose Ramos", members: ["Jose Ramos", "Lorna Ramos"], seats: 2 }
+  { id: "g008", name: "Jose Ramos", members: ["Jose Ramos", "Lorna Ramos"], seats: 2, status: "Attending", count: 2 }
 ];
