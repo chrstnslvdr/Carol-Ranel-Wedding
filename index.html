@@ -46,10 +46,9 @@
     <!-- Search -->
     <div id="searchCard" class="paper card gate__card reveal">
       <div class="twig" aria-hidden="true"></div>
-      <p class="kicker">Please confirm your attendance</p>
+      <p class="kicker">Kindly confirm your attendance</p>
       <h1 class="script gate__title">Find your name</h1>
-      <p class="muted">Type your first or last name to find your invitation and the seats reserved for you.</p>
-      <p class="small muted already">Already sent your RSVP? Just search your name to see your answer and the wedding details. No need to answer again.</p>
+      <p class="muted lead">Search your first or last name to confirm your attendance.</p>
 
       <div class="search">
         <svg class="search__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 3a7.5 7.5 0 0 1 5.96 12.06l4.24 4.24-1.4 1.4-4.24-4.24A7.5 7.5 0 1 1 10.5 3Zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11Z"/></svg>
@@ -58,6 +57,15 @@
       </div>
       <ul id="results" class="results" role="listbox" aria-label="Matching guests" aria-live="polite"></ul>
       <p class="deadline">Kindly RSVP on or before <strong>October 30, 2026</strong></p>
+
+      <div class="gentle-note">
+        <span class="gentle-note__icon" aria-hidden="true">♡</span>
+        <p>We're keeping our celebration intimate, surrounded by our closest family and loved ones. We have lovingly reserved a place for each guest named on your invitation, and we hope you understand that we're unable to welcome additional guests.</p>
+        <p>As much as we adore your little ones, our celebration will be <strong>adults only</strong>. Thank you for understanding!</p>
+      </div>
+
+      <p class="small muted already">Already sent your RSVP? Just search your name again to see your answers and the wedding details.</p>
+
       <div class="help">
         <p class="muted">Can't find your name? Call or message us:</p>
         <div class="contacts" data-contacts></div>
@@ -103,8 +111,12 @@
           <textarea id="message" rows="2" maxlength="300" placeholder="Your wishes for Carol &amp; Ranel…"></textarea>
         </label>
         <p id="formError" class="form-error" role="alert" hidden></p>
+        <div class="final-note" role="note">
+          <strong>Please review before sending.</strong>
+          Once submitted, your answers are final and <u>can't be undone</u> on the website.
+        </div>
         <button id="submitBtn" class="btn btn--primary" disabled>Send my RSVP</button>
-        <p class="tiny muted rules">This is an adults-only celebration. Only the guests named on your invitation may attend. Answers are final once sent.</p>
+        <p class="tiny muted rules">Only the guests named on this invitation may attend. Adults only.</p>
         <button id="skipBtn" class="link-btn" data-enter hidden>My answer is already in, view wedding details</button>
       </div>
 
@@ -188,32 +200,55 @@
       <p class="kicker reveal">Aquino · Banta</p>
       <h2 class="script reveal">Our entourage</h2>
 
-      <div class="ent-group reveal">
+      <article class="ent-card ent-card--wide reveal">
         <h3>Principal Sponsors</h3>
-        <div class="ent-cols">
+        <div class="ent-pair">
           <p>Coun. Mr. Danny De Guzman<br />Mr. Jon Salang</p>
           <p>Mrs. Mila Panen<br />Mrs. Esther Valencia</p>
         </div>
-      </div>
-      <div class="ent-cols reveal">
-        <div class="ent-group"><h3>Best Man</h3><p>Mr. Richard Valencia</p></div>
-        <div class="ent-group"><h3>Brother of the Bride</h3><p>Mr. Raymundo Aquino</p></div>
-      </div>
-      <div class="ent-cols reveal">
-        <div class="ent-group"><h3>Matron of Honor</h3><p>Mrs. Karla Mae Salvador-Macalanda</p></div>
-        <div class="ent-group"><h3>Maid of Honor</h3><p>Ms. Christine Salvador</p></div>
-      </div>
-      <div class="ent-cols reveal">
-        <div class="ent-group"><h3>Veil</h3><p>Ms. Arlene Macaraeg<br />Mr. Nico Macaraeg</p></div>
-        <div class="ent-group"><h3>Cord</h3><p>Mrs. Cecile Aquino<br />Mr. Eric Aquino</p></div>
-      </div>
-      <div class="ent-cols reveal">
-        <div class="ent-group"><h3>Candle</h3><p>Ms. Joyce Aquino<br />Mr. Kaizer Macalanda</p></div>
-        <div class="ent-group"><h3>Coin Bearer</h3><p>Mr. Carlos Magalong</p></div>
-      </div>
-      <div class="ent-cols reveal">
-        <div class="ent-group"><h3>Ring Bearer</h3><p>Mr. Khalifa Drake Medel</p></div>
-        <div class="ent-group"><h3>Bible Bearer</h3><p>Mr. Reynald Aquino</p></div>
+      </article>
+
+      <div class="ent-grid">
+        <article class="ent-card reveal" style="--i:0">
+          <h3>Best Man</h3>
+          <p>Mr. Richard Valencia</p>
+        </article>
+        <article class="ent-card reveal" style="--i:1">
+          <h3>Brother of the Bride</h3>
+          <p>Mr. Raymundo Aquino</p>
+        </article>
+        <article class="ent-card reveal" style="--i:2">
+          <h3>Matron of Honor</h3>
+          <p>Mrs. Karla Mae Salvador-Macalanda</p>
+        </article>
+        <article class="ent-card reveal" style="--i:3">
+          <h3>Maid of Honor</h3>
+          <p>Ms. Christine Salvador</p>
+        </article>
+        <article class="ent-card reveal" style="--i:4">
+          <h3>Veil</h3>
+          <p>Ms. Arlene Macaraeg<br />Mr. Nico Macaraeg</p>
+        </article>
+        <article class="ent-card reveal" style="--i:5">
+          <h3>Cord</h3>
+          <p>Mrs. Cecile Aquino<br />Mr. Eric Aquino</p>
+        </article>
+        <article class="ent-card reveal" style="--i:6">
+          <h3>Candle</h3>
+          <p>Ms. Joyce Aquino<br />Mr. Kaizer Macalanda</p>
+        </article>
+        <article class="ent-card reveal" style="--i:7">
+          <h3>Coin Bearer</h3>
+          <p>Mr. Carlos Magalong</p>
+        </article>
+        <article class="ent-card reveal" style="--i:8">
+          <h3>Ring Bearer</h3>
+          <p>Mr. Khalifa Drake Medel</p>
+        </article>
+        <article class="ent-card reveal" style="--i:9">
+          <h3>Bible Bearer</h3>
+          <p>Mr. Reynald Aquino</p>
+        </article>
       </div>
     </section>
 
@@ -297,6 +332,20 @@
   <button id="musicBtn" class="music" aria-label="Toggle music" hidden>
     <span class="music__bars"><i></i><i></i><i></i><i></i></span>
   </button>
+
+  <!-- Confirm before sending (answers can't be undone) -->
+  <div id="confirmBox" class="modal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle" hidden>
+    <div class="paper modal__card">
+      <p class="kicker">One last look</p>
+      <h3 id="confirmTitle" class="script modal__title">Is this correct?</h3>
+      <ul id="confirmList" class="confirm-list"></ul>
+      <p class="modal__warn">Once you send this RSVP, it <strong>can't be changed or undone</strong> here. For changes, you'll need to contact Karla or Ranel.</p>
+      <div class="modal__actions">
+        <button id="confirmBack" class="btn btn--ghost" type="button">Go back</button>
+        <button id="confirmSend" class="btn btn--primary" type="button">Yes, send it</button>
+      </div>
+    </div>
+  </div>
 
   <script src="config.js"></script>
   <script src="demo-guests.js"></script>

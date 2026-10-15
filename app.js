@@ -191,6 +191,14 @@
   $("#openBtn").addEventListener("click", () => {
     Sound.init(); Sound.paper(); Sound.startMusic();
     $("#envelope").classList.add("open");
+    if (!reduceMotion) for (let i = 0; i < 16; i++) {
+      const b = document.createElement("i");
+      const a = (Math.PI * 2 * i) / 16, r = 90 + Math.random() * 70;
+      b.className = "burst";
+      b.style.cssText = `--x:${Math.cos(a) * r}px;--y:${Math.sin(a) * r}px`;
+      $("#envelope").appendChild(b);
+      b.addEventListener("animationend", () => b.remove());
+    }
     $("#musicBtn").hidden = false;
     setTimeout(() => {
       intro.classList.add("gone");
@@ -257,7 +265,7 @@
       const sub = g.hit && g.hit !== g.invitation ? `<span class="r-sub">includes ${escapeHtml(g.hit)}</span>` : "";
       const badge = answered === n ? `<span class="r-seats r-done">Replied</span>`
         : answered ? `<span class="r-seats r-part">${answered} of ${n} replied</span>`
-        : `<span class="r-seats">${n} seat${plural(n)}</span>`;
+        : `<span class="r-seats">${n} guest${plural(n)}</span>`;
       li.innerHTML = `<span class="r-name">${escapeHtml(g.invitation)}${sub}</span>${badge}`;
       const open = () => openInvite(g);
       li.addEventListener("click", open);
@@ -294,6 +302,9 @@
 
     if (allDone) rememberGroup(g);
     renderPeople();
+    const list = $("#people");
+    list.classList.add("animate");
+    setTimeout(() => list.classList.remove("animate"), 900);
   }
 
   function renderPeople() {
@@ -354,9 +365,33 @@
     invite.classList.add("shake"); setTimeout(() => invite.classList.remove("shake"), 400);
   }
 
-  $("#submitBtn").addEventListener("click", async () => {
+  // Step 1: review answers in a confirmation dialog (answers can't be undone)
+  const confirmBox = $("#confirmBox");
+  $("#submitBtn").addEventListener("click", () => {
     const ids = Object.keys(picks);
     if (!ids.length) return formError("Please choose an answer for at least one guest.");
+    Sound.tap();
+    $("#confirmList").innerHTML = current.guests.filter((x) => picks[x.id]).map((x) => {
+      const yes = picks[x.id] === "yes";
+      return `<li><span>${escapeHtml(x.name)}</span><b class="${yes ? "yes" : "no"}">${yes ? "✓ Attending" : "Can't attend"}</b></li>`;
+    }).join("");
+    confirmBox.hidden = false;
+    requestAnimationFrame(() => confirmBox.classList.add("open"));
+    $("#confirmSend").focus();
+  });
+
+  function closeConfirm() {
+    confirmBox.classList.remove("open");
+    setTimeout(() => (confirmBox.hidden = true), 250);
+  }
+  $("#confirmBack").addEventListener("click", () => { Sound.tap(); closeConfirm(); });
+  confirmBox.addEventListener("click", (e) => { if (e.target === confirmBox) closeConfirm(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !confirmBox.hidden) closeConfirm(); });
+
+  // Step 2: send
+  $("#confirmSend").addEventListener("click", async () => {
+    closeConfirm();
+    const ids = Object.keys(picks);
     const btn = $("#submitBtn");
     btn.disabled = true; btn.textContent = "Sending…";
     const payload = {
@@ -385,6 +420,19 @@
     saveRsvp({ invitation: g.invitation, guests: g.guests.map(({ name, status, table }) => ({ name, status, table })) });
   }
 
+  function floatHearts(n) {
+    if (reduceMotion) return;
+    const colors = ["#a2463a", "#c08a7c", "#7b5232", "#cfb08a"];
+    for (let i = 0; i < n; i++) {
+      const h = document.createElement("span");
+      h.className = "float-heart";
+      h.textContent = "♥";
+      h.style.cssText = `left:${5 + Math.random() * 90}vw;--c:${colors[i % colors.length]};--s:${14 + Math.random() * 18}px;--d:${3 + Math.random() * 2.5}s;--x:${(Math.random() - .5) * 120}px;--r:${(Math.random() - .5) * 60}deg;animation-delay:${Math.random() * 1.2}s`;
+      document.body.appendChild(h);
+      h.addEventListener("animationend", () => h.remove());
+    }
+  }
+
   function showThanks(g, res) {
     showCard(thanks);
     const saved = g.guests.filter((x) => res.saved.includes(x.name));
@@ -396,7 +444,7 @@
     if (pending.length) lines.push(`<span class="small muted">${pending.map((x) => escapeHtml(x.name)).join(", ")} can search their name anytime to answer.</span>`);
 
     if (coming.length) {
-      Sound.success(); leafBurst(40);
+      Sound.success(); leafBurst(30); floatHearts(18);
       $("#thanksIcon").textContent = "♥";
       $("#thanksTitle").textContent = "See you there!";
       lines.unshift("We can't wait to celebrate with you.");
@@ -445,6 +493,26 @@
     setTimeout(() => (btn.querySelector("span").textContent = "copy"), 1800);
   });
 
+  // reveal variants and stagger (siblings appear one after another)
+  [[".story__photo", "from-left"], [".story__text", "from-right"], [".details .detail", "zoom"], [".attire-card", "zoom"], [".notes .detail", "from-left"]]
+    .forEach(([sel, cls]) => $$(sel).forEach((el) => el.classList.add(cls)));
+  const seen = new Set();
+  $$("#site .reveal").forEach((el) => {
+    const parent = el.parentElement;
+    if (seen.has(parent) || el.style.getPropertyValue("--i")) return;
+    seen.add(parent);
+    [...parent.children].filter((c) => c.classList.contains("reveal")).forEach((c, i) => c.style.setProperty("--i", i));
+  });
+
+  // hero: drifting sparkles
+  if (!reduceMotion) {
+    const sp = document.createElement("div");
+    sp.className = "hero__sparkles";
+    sp.innerHTML = Array.from({ length: 18 }, () =>
+      `<i style="left:${Math.random() * 100}%;--d:${7 + Math.random() * 7}s;--delay:${-Math.random() * 12}s;--x:${(Math.random() - .5) * 120}px;transform:scale(${.5 + Math.random()})"></i>`).join("");
+    $(".hero").appendChild(sp);
+  }
+
   // scroll reveal
   const io = new IntersectionObserver((entries) => entries.forEach((e) => {
     if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); }
@@ -453,12 +521,18 @@
 
   // countdown
   const pad = (n) => String(n).padStart(2, "0");
+  function setDigit(sel, v) {
+    const el = $(sel);
+    if (el.textContent === v) return;
+    el.textContent = v;
+    el.classList.remove("tick"); void el.offsetWidth; el.classList.add("tick");
+  }
   function tickCountdown() {
     const ms = Math.max(0, WEDDING_DATE - Date.now());
-    $("#cdD").textContent = pad(Math.floor(ms / 864e5));
-    $("#cdH").textContent = pad(Math.floor(ms / 36e5) % 24);
-    $("#cdM").textContent = pad(Math.floor(ms / 6e4) % 60);
-    $("#cdS").textContent = pad(Math.floor(ms / 1e3) % 60);
+    setDigit("#cdD", pad(Math.floor(ms / 864e5)));
+    setDigit("#cdH", pad(Math.floor(ms / 36e5) % 24));
+    setDigit("#cdM", pad(Math.floor(ms / 6e4) % 60));
+    setDigit("#cdS", pad(Math.floor(ms / 1e3) % 60));
   }
   tickCountdown(); setInterval(tickCountdown, 1000);
 
