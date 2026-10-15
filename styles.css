@@ -443,3 +443,4 @@ h2.script { font-size: clamp(2.4rem, 9vw, 3.4rem); color: var(--bark); line-heig
   padding: 6px 12px; border-radius: 999px; background: #8a3a2a; color: #fff;
   font: 700 .68rem var(--sans); letter-spacing: .06em; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,.25); pointer-events: none;
 }
+.already { margin: .4rem 0 0; font-style: italic; }
