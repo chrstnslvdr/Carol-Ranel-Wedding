@@ -616,3 +616,14 @@ h2.script.reveal.in::after { transform: scaleX(1); }
 @keyframes twigIn { from { clip-path: inset(0 50% 0 50%); opacity: 0; } to { clip-path: inset(0 0 0 0); opacity: 1; } }
 /* keep the whole details page above the falling leaves (its fade-in creates a layer) */
 .site { position: relative; z-index: 6; }
+
+/* entourage: every name on a single line */
+.ent-card p, .ent-pair p { white-space: nowrap; }
+@media (max-width: 600px) {
+  .ent-grid { grid-template-columns: 1fr; gap: 10px; }
+  .ent-pair { grid-template-columns: 1fr; gap: 0; }
+  .ent-card { padding: 16px 12px 14px; }
+  .ent-card p, .ent-pair p { font-size: clamp(.95rem, 4.6vw, 1.15rem); }
+}
+.notes > * { min-width: 0; }
+@media (max-width: 360px) { .hashtag { font-size: .92rem; padding: 9px 12px; gap: 6px; } }
