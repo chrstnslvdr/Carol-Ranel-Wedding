@@ -161,7 +161,7 @@
   })();
 
   // ---------- falling leaves ----------
-  const LEAF_COLORS = ["#a87b51", "#7b5232", "#cfb08a", "#c08a7c", "#6b4134"];
+  const LEAF_COLORS = ["#c9a063", "#b98a64", "#dcc2a8", "#c08a7c", "#b9734f"];
   function spawnLeaf(burst) {
     const el = document.createElement("i");
     el.className = "leaf";
@@ -422,7 +422,7 @@
 
   function floatHearts(n) {
     if (reduceMotion) return;
-    const colors = ["#a2463a", "#c08a7c", "#7b5232", "#cfb08a"];
+    const colors = ["#c08a7c", "#b9734f", "#c9a063", "#7a4a35"];
     for (let i = 0; i < n; i++) {
       const h = document.createElement("span");
       h.className = "float-heart";
