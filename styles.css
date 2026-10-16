@@ -750,3 +750,66 @@ h2.script.reveal.in::after { transform: none; clip-path: inset(0 0 0 0); }
 /* give the script letters room so the shine doesn't clip their swashes */
 .hero__names .script { padding: .18em .22em .12em; margin: -.18em -.22em -.12em; }
 .attire-card h3 { font-size: .64rem; letter-spacing: .12em; white-space: nowrap; }
+
+/* ============ Revisions: spacing, bands, photo hero ============ */
+/* hero: names sit in the sky above the couple, with a soft shade behind them */
+.hero__photo img { object-position: 50% 100%; }
+.hero::after { background: linear-gradient(180deg, rgba(47, 33, 28, .8) 0%, rgba(47, 33, 28, .6) 30%, rgba(47, 33, 28, .35) 45%, rgba(47, 33, 28, 0) 62%, rgba(47, 33, 28, 0) 82%, rgba(47, 33, 28, .45) 100%); }
+.hero__text { top: max(9vh, calc(env(safe-area-inset-top) + 48px)); bottom: auto; }
+.hero__names .script { text-shadow: 0 2px 18px rgba(0, 0, 0, .45); }
+.hero__date, .hero__place { text-shadow: 0 1px 10px rgba(0, 0, 0, .5); }
+/* more room between the names and the ampersand */
+.hero__names { gap: .15em; line-height: 1; }
+.hero__names .amp { font-size: 2.1rem; margin: .1em 0; }
+@media (min-width: 760px) { .hero__names { gap: 1.6rem; } .hero__names .amp { margin: 0; } }
+
+/* sub-headings: easier to read and further from the heading */
+.section .kicker, .gate .kicker, .modal .kicker {
+  display: inline-flex; align-items: center; gap: 10px; margin-bottom: .9rem;
+  font-weight: 700; letter-spacing: .24em; color: #9a5636;
+}
+.section .kicker::before, .section .kicker::after { content: ""; width: 22px; height: 1px; background: currentColor; opacity: .55; }
+.entourage .kicker, .countdown .kicker { color: #f1d9b8; }
+
+/* countdown: a warm band of its own */
+.countdown {
+  max-width: none; padding: 46px 16px 54px;
+  background: linear-gradient(135deg, var(--bark), var(--walnut) 55%, var(--terracotta));
+  box-shadow: inset 0 10px 24px -14px rgba(0, 0, 0, .5);
+}
+.countdown .timer div {
+  background: rgba(255, 250, 246, .1); border: 1px solid rgba(255, 236, 210, .3); border-top: 3px solid var(--gold);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, .18); backdrop-filter: blur(2px);
+}
+.countdown .timer b { color: #fff6ec; }
+.countdown .timer small { color: #f1d9b8; }
+
+/* story: photo + text side by side only when the heading fits on one line */
+@media (min-width: 760px) and (max-width: 959px) {
+  .story { grid-template-columns: 1fr; text-align: center; }
+}
+@media (min-width: 960px) {
+  .story { max-width: 1000px; grid-template-columns: 360px 1fr; gap: 56px; text-align: left; }
+  .story__text h2.script { white-space: nowrap; }
+  .story__text h2.script.reveal::after { margin-left: 0; }
+}
+.story__photo img { object-position: 50% 85%; }
+.gallery__photo img { object-position: 50% 70%; }
+
+/* details: "Open in Maps" buttons line up at the bottom of each card */
+.details .detail { display: flex; flex-direction: column; align-items: center; }
+.details .detail .btn { margin-top: auto; }
+
+/* dress code: its own blush band so it doesn't blend into the questions */
+.attire {
+  position: relative; max-width: none; margin: 40px 0;
+  background: #efd9cd var(--grain);
+}
+.attire > * { max-width: 760px; margin-left: auto; margin-right: auto; }
+.attire::before, .attire::after { content: ""; position: absolute; left: 0; right: 0; height: 40px; background-size: 100% 100%; pointer-events: none; }
+.attire::before { top: -39px; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 40' preserveAspectRatio='none'><path d='M0 40 C 180 0 320 34 480 18 C 640 2 760 30 960 14 C 1080 4 1160 18 1200 22 L1200 40 Z' fill='%23efd9cd'/></svg>"); }
+.attire::after { bottom: -39px; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 40' preserveAspectRatio='none'><path d='M0 40 C 180 0 320 34 480 18 C 640 2 760 30 960 14 C 1080 4 1160 18 1200 22 L1200 40 Z' fill='%23efd9cd' transform='translate(0 40) scale(1 -1)'/></svg>"); }
+.attire .attire-card { background: var(--paper); }
+.hero__date { font-weight: 600; }
+.hero__date, .hero__place { text-shadow: 0 1px 3px rgba(0, 0, 0, .55), 0 2px 16px rgba(0, 0, 0, .55); }
+.hero__place { opacity: 1; }
