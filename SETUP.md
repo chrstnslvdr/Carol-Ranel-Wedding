@@ -25,9 +25,9 @@ Guest's phone ──search name──▶ Google Apps Script ──reads──▶
 
    | Invitation | Guest Name |
    |---|---|
-   | Cristina, RB & Winnie | Cristina Ramos |
-   | Cristina, RB & Winnie | RB Ramos |
-   | Cristina, RB & Winnie | Winnie Tuano |
+   | Liza, Ben & Mia | Liza Cruz |
+   | Liza, Ben & Mia | Ben Cruz |
+   | Liza, Ben & Mia | Mia Lopez |
    | The Aquino Family | Cecile Aquino |
    | The Aquino Family | Eric Aquino |
    | Ana Santos | Ana Santos |

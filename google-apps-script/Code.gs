@@ -5,7 +5,7 @@
  *   ID | Invitation | Guest Name | Status | Answered By | Message | Responded At | Table
  *
  * - Invitation: same text for everyone on one invitation. Guests see it as the
- *   card title, e.g. "The Aquino Family" or "Cristina, RB & Winnie".
+ *   card title, e.g. "The Aquino Family" or "Liza, Ben & Mia".
  * - Guest Name: the person's full name (one seat each). For an unnamed extra seat
  *   type "One additional seat": guests see it as "Additional guest" and it isn't searchable.
  * - Table: fill in later when you arrange seating; guests will see it.

@@ -2,9 +2,9 @@
 // The real guest list lives in the Google Sheet (see SETUP.md).
 // One entry per person; people on the same invitation share the same `invitation`.
 window.GUESTS = [
-  { id: "d01", invitation: "Cristina, RB & Winnie", name: "Cristina Ramos" },
-  { id: "d02", invitation: "Cristina, RB & Winnie", name: "RB Ramos" },
-  { id: "d03", invitation: "Cristina, RB & Winnie", name: "Winnie Tuano" },
+  { id: "d01", invitation: "Liza, Ben & Mia", name: "Liza Cruz" },
+  { id: "d02", invitation: "Liza, Ben & Mia", name: "Ben Cruz" },
+  { id: "d03", invitation: "Liza, Ben & Mia", name: "Mia Lopez" },
 
   { id: "d04", invitation: "The Aquino Family", name: "Cecile Aquino", status: "Attending", answeredBy: "Cecile Aquino", table: "3" },
   { id: "d05", invitation: "The Aquino Family", name: "Eric Aquino", status: "Attending", answeredBy: "Cecile Aquino", table: "3" },
