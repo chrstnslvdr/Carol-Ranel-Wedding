@@ -78,7 +78,9 @@
 
   // ---------- sound (Web Audio; no files needed) ----------
   const Sound = (() => {
-    let ctx, master, musicGain, musicTimer, musicEl, musicOn = false;
+    let ctx, master, musicGain, musicTimer, musicOn = false;
+    const musicEl = new Audio("assets/audio/music.mp3"); // starts loading now, plays on the first tap
+    musicEl.preload = "auto";
 
     function init() {
       if (ctx) return;
@@ -130,23 +132,35 @@
       tick(); musicTimer = setInterval(tick, 8 * beat * 1000);
     }
 
+    let songNode = null;
+    function fadeIn(target) {
+      musicGain.gain.cancelScheduledValues(ctx.currentTime);
+      musicGain.gain.setValueAtTime(musicGain.gain.value, ctx.currentTime);
+      musicGain.gain.linearRampToValueAtTime(target, ctx.currentTime + 3);
+    }
     function startMusic() {
       init();
       musicOn = true;
-      if (ctx) ctx.resume();
-      musicEl = musicEl || new Audio("assets/audio/music.mp3");
-      musicEl.loop = true; musicEl.volume = .5;
-      musicEl.play().catch(() => { // no file → generated melody
+      musicEl.loop = true;
+      if (ctx) {
+        ctx.resume();
+        // route the song through the mixer so the fade-in also works on iPhone (it ignores audio.volume)
+        if (!songNode) { songNode = ctx.createMediaElementSource(musicEl); songNode.connect(musicGain); }
+      } else {
+        musicEl.volume = .5;
+      }
+      musicEl.play().then(() => {
+        if (ctx) fadeIn(.8);
+      }).catch(() => { // no file → generated melody
         if (!ctx || !musicOn) return;
         if (!musicTimer) musicBox();
-        musicGain.gain.cancelScheduledValues(ctx.currentTime);
-        musicGain.gain.linearRampToValueAtTime(1, ctx.currentTime + 2);
+        fadeIn(1);
       });
     }
     function stopMusic() {
       musicOn = false;
-      if (musicEl) musicEl.pause();
-      if (ctx) musicGain.gain.linearRampToValueAtTime(0, ctx.currentTime + .4);
+      musicEl.pause();
+      if (ctx) { musicGain.gain.cancelScheduledValues(ctx.currentTime); musicGain.gain.setValueAtTime(musicGain.gain.value, ctx.currentTime); musicGain.gain.linearRampToValueAtTime(0, ctx.currentTime + .4); }
       clearInterval(musicTimer); musicTimer = null;
     }
     const toggleMusic = () => (musicOn ? stopMusic() : startMusic(), musicOn);
@@ -188,23 +202,34 @@
   // ---------- 1. intro ----------
   const intro = $("#intro"), gate = $("#gate"), site = $("#site");
 
+  // opening sequence: seal pops → flap folds open → card glides out → scene dissolves into the RSVP page
+  let opened = false;
   $("#openBtn").addEventListener("click", () => {
-    Sound.init(); Sound.paper(); Sound.startMusic();
-    $("#envelope").classList.add("open");
+    if (opened) return;
+    opened = true;
+    Sound.init(); Sound.startMusic();
+    const env = $("#envelope");
+    const T = reduceMotion ? { flap: 0, rise: 0, exit: 300, done: 700 } : { flap: 380, rise: 1150, exit: 2550, done: 3500 };
+    intro.classList.add("opening");
+    env.classList.add("opening");
     if (!reduceMotion) for (let i = 0; i < 16; i++) {
       const b = document.createElement("i");
       const a = (Math.PI * 2 * i) / 16, r = 90 + Math.random() * 70;
       b.className = "burst";
       b.style.cssText = `--x:${Math.cos(a) * r}px;--y:${Math.sin(a) * r}px`;
-      $("#envelope").appendChild(b);
+      env.appendChild(b);
       b.addEventListener("animationend", () => b.remove());
     }
-    $("#musicBtn").hidden = false;
+    setTimeout(() => { env.classList.add("flap"); Sound.paper(); }, T.flap);
+    setTimeout(() => { env.classList.add("rise"); Sound.chime(); }, T.rise);
     setTimeout(() => {
-      intro.classList.add("gone");
+      // show the next page underneath so the intro cross-fades into it
       const existing = loadRsvp();
       existing ? showSite(existing) : showGate();
-    }, 1900);
+      document.body.classList.add("locked");
+      intro.classList.add("exit", "gone");
+    }, T.exit);
+    setTimeout(() => { document.body.classList.remove("locked"); $("#musicBtn").hidden = false; }, T.done);
   });
 
   $("#musicBtn").addEventListener("click", (e) => {
