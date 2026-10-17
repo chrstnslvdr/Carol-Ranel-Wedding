@@ -1,3 +1,11 @@
-# Plain static site — no build step, works on the Netlify free plan.
+# Plain static site, no build step: works on the Netlify free plan.
 [build]
-  publish = "."
+  publish = "site"
+  # Only rebuild when the website itself changed (guides, screenshots and scripts outside site/ don't cost a deploy).
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- site/ netlify.toml"
+
+# Long cache for photos/music/drawings so returning guests don't re-download them.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"

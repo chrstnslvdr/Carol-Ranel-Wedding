@@ -1,7 +1,7 @@
 /**
  * Carol & Ranel — RSVP backend (free, runs inside your Google Sheet).
  *
- * Sheet tab "Guests": ONE ROW PER PERSON. Row 1 headers (any order):
+ * Sheet tab "Guests" (or the first tab): ONE ROW PER PERSON. Row 1 headers (any order):
  *   ID | Invitation | Guest Name | Status | Answered By | Message | Responded At | Table
  *
  * - Invitation: same text for everyone on one invitation. Guests see it as the
@@ -119,8 +119,8 @@ function rsvp_(p) {
 
 // ---------- helpers ----------
 function read_() {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
-  if (!sheet) throw new Error('Missing sheet tab "' + SHEET_NAME + '"');
+  const book = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = book.getSheetByName(SHEET_NAME) || book.getSheets()[0]; // the "Guests" tab, else the first tab
   const values = sheet.getDataRange().getValues();
   const header = values[0].map(h => String(h).trim().toLowerCase());
   const cols = {};

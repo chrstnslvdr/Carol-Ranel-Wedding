@@ -79,9 +79,9 @@
     return res.json();
   }
 
-  // ---------- sound (Web Audio; no files needed) ----------
+  // ---------- sound: background song + small Web Audio effects ----------
   const Sound = (() => {
-    let ctx, master, musicGain, musicTimer, musicOn = false;
+    let ctx, master, musicGain, songNode = null, musicOn = false;
     const musicEl = new Audio("assets/audio/music.mp3"); // starts loading now, plays on the first tap
     musicEl.preload = "auto";
 
@@ -117,25 +117,6 @@
     const error = () => ctx && tone(220, ctx.currentTime, .25, .08, "triangle");
     const success = () => ctx && [523.3, 659.3, 784, 1046.5].forEach((f, i) => tone(f, ctx.currentTime + i * .12, 1.6, .12, "sine"));
 
-    // Background music: assets/audio/music.mp3 if present, otherwise a gentle generated music-box loop.
-    const NOTES = [392, 493.9, 587.3, 740, 659.3, 587.3, 493.9, 587.3, 349.2, 440, 523.3, 659.3, 587.3, 523.3, 440, 523.3];
-    function musicBox() {
-      let step = 0;
-      const beat = .42;
-      const tick = () => {
-        const t = ctx.currentTime + .05;
-        for (let i = 0; i < 8; i++) {
-          const n = NOTES[(step + i) % NOTES.length];
-          tone(n, t + i * beat, 1.8, .07, "sine", musicGain);
-          tone(n * 2, t + i * beat, .6, .015, "sine", musicGain);
-          if (i % 4 === 0) tone(n / 2, t + i * beat, 2.4, .05, "triangle", musicGain);
-        }
-        step = (step + 8) % NOTES.length;
-      };
-      tick(); musicTimer = setInterval(tick, 8 * beat * 1000);
-    }
-
-    let songNode = null;
     function fadeIn(target) {
       musicGain.gain.cancelScheduledValues(ctx.currentTime);
       musicGain.gain.setValueAtTime(musicGain.gain.value, ctx.currentTime);
@@ -152,26 +133,19 @@
       } else {
         musicEl.volume = .5;
       }
-      musicEl.play().then(() => {
-        if (ctx) fadeIn(.8);
-      }).catch(() => { // no file → generated melody
-        if (!ctx || !musicOn) return;
-        if (!musicTimer) musicBox();
-        fadeIn(1);
-      });
+      musicEl.play().then(() => ctx && fadeIn(.8)).catch(() => {});
     }
     function stopMusic() {
       musicOn = false;
       musicEl.pause();
       if (ctx) { musicGain.gain.cancelScheduledValues(ctx.currentTime); musicGain.gain.setValueAtTime(musicGain.gain.value, ctx.currentTime); musicGain.gain.linearRampToValueAtTime(0, ctx.currentTime + .4); }
-      clearInterval(musicTimer); musicTimer = null;
     }
     const toggleMusic = () => (musicOn ? stopMusic() : startMusic(), musicOn);
 
     // pause when the tab/app is hidden (phones)
     document.addEventListener("visibilitychange", () => {
-      if (document.hidden) { ctx && ctx.suspend(); musicEl && musicEl.pause(); }
-      else if (musicOn) { ctx && ctx.resume(); musicEl && !musicEl.error && musicEl.play().catch(() => {}); }
+      if (document.hidden) { ctx && ctx.suspend(); musicEl.pause(); }
+      else if (musicOn) { ctx && ctx.resume(); musicEl.play().catch(() => {}); }
     });
 
     return { init, paper, chime, tap, error, success, startMusic, toggleMusic };
@@ -182,25 +156,13 @@
   function spawnLeaf(burst) {
     const el = document.createElement("i");
     el.className = "leaf";
-    const size = 10 + Math.random() * 14;
+    const size = 8 + Math.random() * 10;
     el.style.cssText = `left:${Math.random() * 100}vw;width:${size}px;height:${size}px;--c:${LEAF_COLORS[Math.random() * LEAF_COLORS.length | 0]};--d:${(burst ? 5 : 10) + Math.random() * 8}s;animation-delay:${burst ? Math.random() * 1.5 : 0}s`;
     $(".leaves").appendChild(el);
     el.addEventListener("animationend", () => el.remove());
   }
-  const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const leafBurst = (n = 30) => { if (!reduceMotion) for (let i = 0; i < n; i++) spawnLeaf(true); };
-  if (!reduceMotion) setInterval(() => document.hidden || spawnLeaf(false), 1600);
-
-  // ---------- photos: placeholder until real files are added ----------
-  $$("img[data-placeholder]").forEach((img) => {
-    const fallback = () => {
-      const div = document.createElement("div");
-      div.className = "photo-fallback";
-      div.textContent = img.dataset.placeholder;
-      img.replaceWith(div);
-    };
-    if (img.complete && img.naturalWidth === 0) fallback(); else img.addEventListener("error", fallback);
-  });
+  const leafBurst = (n) => { for (let i = 0; i < n; i++) spawnLeaf(true); };
+  setInterval(() => document.hidden || spawnLeaf(false), 1400);
 
   // ---------- 1. intro ----------
   const intro = $("#intro"), gate = $("#gate"), site = $("#site");
@@ -212,10 +174,10 @@
     opened = true;
     Sound.init(); Sound.startMusic();
     const env = $("#envelope");
-    const T = reduceMotion ? { flap: 0, rise: 0, exit: 300, done: 700 } : { flap: 700, rise: 2100, exit: 4700, done: 6400 };
+    const T = { flap: 700, rise: 2100, exit: 4700, done: 6400 };
     intro.classList.add("opening");
     env.classList.add("opening");
-    if (!reduceMotion) for (let i = 0; i < 16; i++) {
+    for (let i = 0; i < 16; i++) {
       const b = document.createElement("i");
       const a = (Math.PI * 2 * i) / 16, r = 90 + Math.random() * 70;
       b.className = "burst";
@@ -376,7 +338,7 @@
           <span class="badge ${yes ? "badge--yes" : "badge--no"}">${yes ? "✓ Attending" : "Can't attend"}</span></li>`;
       }
       const p = picks[x.id];
-      return `<li class="person${isExtra(x.name) ? " extra" : ""}"><span class="person__name">${escapeHtml(label(x))}${p ? "" : `<small>${isExtra(x.name) ? "a seat reserved for one more guest" : "not answered yet"}</small>`}</span>
+      return `<li class="person"><span class="person__name">${escapeHtml(label(x))}${p ? "" : `<small>${isExtra(x.name) ? "a seat reserved for one more guest" : "not answered yet"}</small>`}</span>
         <span class="seg" role="radiogroup" aria-label="${escapeHtml(label(x))}">
           <button data-id="${escapeHtml(x.id)}" data-a="yes" role="radio" aria-checked="${p === "yes"}">Attending</button>
           <button data-id="${escapeHtml(x.id)}" data-a="no" role="radio" aria-checked="${p === "no"}">Can't attend</button>
@@ -486,7 +448,6 @@
   }
 
   function floatHearts(n) {
-    if (reduceMotion) return;
     const colors = ["#c08a7c", "#b9734f", "#c9a063", "#7a4a35"];
     for (let i = 0; i < n; i++) {
       const h = document.createElement("span");
@@ -570,13 +531,11 @@
   });
 
   // hero: drifting sparkles
-  if (!reduceMotion) {
-    const sp = document.createElement("div");
-    sp.className = "hero__sparkles";
-    sp.innerHTML = Array.from({ length: 18 }, () =>
-      `<i style="left:${Math.random() * 100}%;--d:${7 + Math.random() * 7}s;--delay:${-Math.random() * 12}s;--x:${(Math.random() - .5) * 120}px;transform:scale(${.5 + Math.random()})"></i>`).join("");
-    $(".hero").appendChild(sp);
-  }
+  const sp = document.createElement("div");
+  sp.className = "hero__sparkles";
+  sp.innerHTML = Array.from({ length: 18 }, () =>
+    `<i style="left:${Math.random() * 100}%;--d:${7 + Math.random() * 7}s;--delay:${-Math.random() * 12}s;--x:${(Math.random() - .5) * 120}px;transform:scale(${.5 + Math.random()})"></i>`).join("");
+  $(".hero").appendChild(sp);
 
   // scroll reveal
   const io = new IntersectionObserver((entries) => entries.forEach((e) => {

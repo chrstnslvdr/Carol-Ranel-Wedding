@@ -1,105 +1,72 @@
-# Carol & Ranel — wedding website setup
+# Carol & Ranel: wedding website setup
 
-Everything here is free: **Netlify (free plan)** hosts the site, and a **Google Sheet** with a free Google Apps Script stores the guest list and the RSVPs.
+Everything here is free: **Netlify (free plan)** hosts the site and a **Google Sheet** stores the guest list and RSVPs.
 
 ```
-Guest's phone ──search name──▶ Google Apps Script ──reads──▶ Google Sheet (Guests)
-              ──send RSVP───▶ Google Apps Script ──writes─▶ Status / Attending / Message
+Guest's phone ──search name──▶ Google Apps Script ──reads──▶ Google Sheet (guest list)
+              ──send RSVP───▶ Google Apps Script ──writes─▶ Status / Answered By / Message / Responded At
 ```
 
----
+## What's where
 
-## 1. Google Sheet (guest list + RSVPs)
+| Path | What it is |
+|---|---|
+| `site/` | The website. Only this folder is published to Netlify. |
+| `site/config.js` | Settings: Google Sheet link (`scriptUrl`), wedding date, RSVP deadline, contact numbers |
+| `google-apps-script/Code.gs` | The script that connects the Google Sheet to the website |
+| `docs/` | Screenshots and notes (not published) |
 
-**One row per person.** Everyone gets their own seat, so each guest is a row.
+## 1. The Google Sheet
 
-1. Create a new Google Sheet, e.g. **"Carol & Ranel RSVP"**.
-2. Rename the first tab (bottom left) to exactly **`Guests`**.
-3. Put these headers in **row 1**:
+The sheet **"Carol & Ranel RSVP"** already exists in Google Drive with all 67 seats (one row per person).
 
-   | ID | Invitation | Guest Name | Status | Answered By | Message | Responded At | Table |
-   |----|------------|------------|--------|-------------|---------|--------------|-------|
+| Column | Who fills it |
+|---|---|
+| ID | Filled automatically the first time someone searches |
+| Invitation | You. Same text for everyone on one invitation; guests see it as the card title |
+| Guest Name | You. One seat each. `One additional seat` = an unnamed extra seat (shown as "Additional guest", not searchable) |
+| Status, Answered By, Message, Responded At | The website |
+| Table | You, later, when seating is arranged. Guests then see their table number |
 
-   *Easiest: File → Import → Upload your guest list CSV → "Replace current sheet", then rename the tab to `Guests`.*
-4. Fill in **Invitation** and **Guest Name** for every guest:
+**Changing an answer** (when a guest contacts you): type the new Status yourself, or clear the Status cell so they can answer again.
 
-   | Invitation | Guest Name |
-   |---|---|
-   | Liza, Ben & Mia | Liza Cruz |
-   | Liza, Ben & Mia | Ben Cruz |
-   | Liza, Ben & Mia | Mia Lopez |
-   | The Aquino Family | Cecile Aquino |
-   | The Aquino Family | Eric Aquino |
-   | Ana Santos | Ana Santos |
+**Watching RSVPs live:** open the sheet in Google Drive or the Google Sheets app. Each answer appears in its row within seconds.
 
-   - **Invitation** groups people who share one invitation. Type it **exactly the same** on each row; guests see it as the title of their card.
-   - Seats = number of names in the invitation (counted automatically).
-   - Leave **ID, Status, Answered By, Message, Responded At** empty. The website fills them in.
-   - **Table**: leave empty for now. When you arrange seating after the RSVPs, type the table number and guests will see it on the site.
-   - **Extra unnamed seat**: add a row with Guest Name `One additional seat`. Guests see it as "Additional guest", it can't be searched, and whoever answers for the invitation answers for it.
+**Totals** (type these anywhere, e.g. in column J):
+- Attending: `=COUNTIF(D:D,"Attending")`
+- Not attending: `=COUNTIF(D:D,"Not attending")`
+- Not answered yet: `=COUNTA(C2:C)-COUNTA(D2:D)`
 
-**How guests answer**
-- Searching any name opens the shared invitation with every name listed.
-- They can answer for themselves and anyone else on it, and leave the rest for those people to answer later.
-- An answered name is locked. To change it, clear that person's **Status** cell (or type the new answer yourself).
+## 2. Connect the sheet to the website (once, about 5 minutes)
 
-**Watching RSVPs live:** open the sheet in Google Drive (computer or the Google Sheets app). Each answer appears in its row within seconds: Status, who answered, their message and the time. You don't need to refresh; Google Sheets updates on its own.
-
-**Handy formulas** (put them in another tab):
-- Attending: `=COUNTIF(Guests!D:D,"Attending")`
-- Not attending: `=COUNTIF(Guests!D:D,"Not attending")`
-- Not answered yet: `=COUNTA(Guests!C2:C)-COUNTA(Guests!D2:D)`
-
-## 2. Connect the Sheet to the website (Apps Script)
-
-1. In the Sheet: **Extensions → Apps Script**.
-2. Delete what's in `Code.gs` and paste everything from [`google-apps-script/Code.gs`](google-apps-script/Code.gs). Click 💾 **Save**.
-3. Click **Deploy → New deployment**.
-   - Gear icon ⚙ → **Web app**
+1. Open the sheet → **Extensions → Apps Script**.
+2. Delete what's in `Code.gs`, paste everything from [`google-apps-script/Code.gs`](google-apps-script/Code.gs), click 💾 **Save**.
+3. **Deploy → New deployment** → gear icon ⚙ → **Web app**
    - Execute as: **Me**
    - Who has access: **Anyone**
-   - Click **Deploy**, then **Authorize access**, choose your Google account.
-     If you see *"Google hasn't verified this app"*, click **Advanced → Go to … (unsafe)**. That warning appears because it's your own script; it only accesses this one sheet.
-4. Copy the **Web app URL** (ends in `/exec`).
-5. Paste it into [`config.js`](config.js):
+   - **Deploy** → **Authorize access** → choose your account. If Google says *"Google hasn't verified this app"*, click **Advanced → Go to … (unsafe)**. That warning appears because it's your own script; it only accesses this sheet.
+4. Copy the **Web app URL** (ends in `/exec`) and send it to Claude, or paste it into `site/config.js`:
    ```js
    scriptUrl: "https://script.google.com/macros/s/XXXX/exec",
    ```
-   Until this is set, the site runs in **demo mode** with sample names.
 
-> If you later edit `Code.gs`, use **Deploy → Manage deployments → ✏ Edit → Version: New version → Deploy** so the URL stays the same.
+> **If "Anyone" isn't offered** (only "Anyone within your organization"): the sheet is in a work Google account whose admin blocks public scripts, and guests couldn't reach it. Use a personal Gmail instead: in the sheet, **File → Download → CSV**, then in your personal Google Drive **New → File upload**, open it with Google Sheets, and do steps 1–4 there.
 
-Guests can only search (3+ letters, max 5 results). They can't see the full list or other people's answers.
+> If you edit `Code.gs` later: **Deploy → Manage deployments → ✏ Edit → Version: New version → Deploy** (the URL stays the same).
 
-## 3. Photos and music
+## 3. Put it online (Netlify, free, once)
 
-Upload these on GitHub (**Add file → Upload files**) into these folders. Use these exact names:
+The Netlify project **carol-and-ranel** already exists.
 
-| File | Where |
-|---|---|
-| `photo-1.jpg` | `assets/photos/` (first screen, portrait works best) |
-| `photo-2.jpg` | `assets/photos/` (arch frame) |
-| `photo-3.jpg` | `assets/photos/` (closing photo) |
-| `music.mp3`   | `assets/audio/` (background music; keep under ~5 MB) |
+1. Open <https://app.netlify.com/projects/carol-and-ranel>.
+2. **Project configuration → Build & deploy → Continuous deployment → Link repository → GitHub** → choose **carol-ranel-wedding**.
+3. Branch: `claude/wedding-rsvp-ui-design-p02v6q`. Leave the build command empty. The publish folder (`site`) comes from `netlify.toml` automatically.
+4. **Deploy.** The site is live at **https://carol-and-ranel.netlify.app**.
 
-Tip: resize photos to about 1600 px on the long side (under 500 KB) so the site loads fast on mobile data.
+From then on every change pushed to that branch re-publishes automatically. Changes outside `site/` (guides, screenshots, the sheet script) are skipped, so they don't use deploy credits.
 
-## 4. Put it online (Netlify, free)
+## 4. Before sending to guests
 
-1. Log in at <https://app.netlify.com>.
-2. **Add new project → Import an existing project → GitHub**, and allow access to the `carol-ranel-wedding` repository.
-3. Pick the repository. Settings:
-   - Branch to deploy: `main`
-   - Build command: *(leave empty)*
-   - Publish directory: `.`
-4. Click **Deploy**.
-5. **Project configuration → Change project name** → `carol-and-ranel`.
-   Your site is now **https://carol-and-ranel.netlify.app**.
-
-Every change pushed to `main` re-publishes automatically.
-
-## 5. Before sending to guests
-
-- [ ] Search a test name on your phone and submit an RSVP. Check that the Sheet updates, then clear that test row's Status.
-- [ ] Make the QR code on the printed invitation point to `https://carol-and-ranel.netlify.app`.
-- [ ] RSVP closes automatically after **Oct 30, 2026** (set in `config.js` *and* `Code.gs`).
+- [ ] On your phone: search a test name, send an RSVP, check the sheet updates, then clear that row's Status.
+- [ ] Make the QR code on the invitation point to `https://carol-and-ranel.netlify.app`.
+- [ ] RSVP closes automatically after **Oct 30, 2026** (set in `site/config.js` and `google-apps-script/Code.gs`).
