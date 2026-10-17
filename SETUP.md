@@ -18,11 +18,8 @@ Guest's phone ──search name──▶ Google Apps Script ──reads──▶
 
 ## 1. The Google Sheet
 
-The sheet **"Carol & Ranel RSVP"** is in the shared wedding folder in Google Drive with all 67 seats (one row per person).
-
-**First, make it yours (once):** it was created by another Google account, and Google can't move ownership to a personal Gmail.
-Signed in as the personal Gmail, open it → **File → Make a copy** → name it `Carol & Ranel RSVP`, folder: the wedding folder.
-Use that copy for everything below (you can delete the original).
+The sheet **"Carol & Ranel RSVP"** (owned by chrstnslvdr2@gmail.com) is in the wedding folder in Google Drive with all 67 seats (one row per person):
+<https://docs.google.com/spreadsheets/d/1Bn3rKGcJdEipOjKrozvoQbltMWWJm20xDdhfPGMhfq8/edit>
 
 | Column | Who fills it |
 |---|---|
@@ -54,7 +51,7 @@ Use that copy for everything below (you can delete the original).
    scriptUrl: "https://script.google.com/macros/s/XXXX/exec",
    ```
 
-> **If "Anyone" isn't offered** (only "Anyone within your organization"), you're signed in with a work account. Switch to the personal Gmail that owns the copy and repeat steps 1–4.
+> **If "Anyone" isn't offered** (only "Anyone within your organization"), you're signed in with a work account. Switch to chrstnslvdr2@gmail.com and repeat steps 1–4.
 
 > If you edit `Code.gs` later: **Deploy → Manage deployments → ✏ Edit → Version: New version → Deploy** (the URL stays the same).
 
