@@ -8,7 +8,7 @@
   const DEMO = !API;
   const STORAGE_KEY = "cr-wedding-rsvp";
   const MIN_CHARS = 3;
-  const MAX_RESULTS = 5;
+  const MAX_RESULTS = 8;
 
   const $ = (s) => document.querySelector(s);
   const $$ = (s) => document.querySelectorAll(s);
@@ -20,6 +20,10 @@
   const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const plural = (n) => (n === 1 ? "" : "s");
   const isClosed = () => Date.now() > DEADLINE.getTime();
+  // unnamed seats in the sheet, e.g. "One additional seat" — shown as "Additional guest", never searchable
+  const EXTRA_RE = /^(one\s+)?(additional|extra)\s+(seat|guest)s?$|^plus\s*one$|^\+\s*1$/i;
+  const isExtra = (name) => EXTRA_RE.test(String(name).trim());
+  const label = (x) => (isExtra(x.name) ? "Additional guest" : x.name);
   const fmtPhone = (p) => p.replace(/^(\d{4})(\d{3})(\d{4})$/, "$1 $2 $3");
 
   // contact buttons
@@ -44,16 +48,15 @@
       const keys = [...new Set(demoRows.map((r) => r.invitation))];
       const out = [];
       for (const key of keys) {
-        const hitRow = demoRows.find((r) => r.invitation === key && matches(r.name));
+        const hitRow = demoRows.find((r) => r.invitation === key && !isExtra(r.name) && matches(r.name));
         if (hitRow || matches(key)) out.push(demoGroup(key, hitRow ? hitRow.name : null));
-        if (out.length >= MAX_RESULTS) break;
       }
-      return out;
+      return { results: out.slice(0, MAX_RESULTS), more: out.length > MAX_RESULTS };
     }
     const res = await fetch(`${API}?action=search&q=${encodeURIComponent(q)}`);
     const data = await res.json();
     if (!data.ok) throw new Error(data.error || "search failed");
-    return data.results;
+    return { results: data.results, more: !!data.more };
   }
 
   async function apiRsvp(payload) {
@@ -64,12 +67,12 @@
       payload.answers.forEach((a) => {
         const row = demoRows.find((r) => r.id === a.id && r.invitation === payload.invitation);
         if (!row) return;
-        if (row.status) { skipped.push(row.name); return; }
+        if (row.status) { skipped.push(label(row)); return; }
         row.status = a.attending ? ATTENDING : NOT_ATTENDING;
         row.answeredBy = payload.answeredBy;
-        saved.push(row.name);
+        saved.push(row.id);
       });
-      return { ok: true, saved, skipped, group: demoGroup(payload.invitation, null) };
+      return { ok: true, savedIds: saved, skipped, group: demoGroup(payload.invitation, null) };
     }
     // text/plain avoids a CORS preflight, which Apps Script doesn't support
     const res = await fetch(API, { method: "POST", body: JSON.stringify(payload) });
@@ -209,7 +212,7 @@
     opened = true;
     Sound.init(); Sound.startMusic();
     const env = $("#envelope");
-    const T = reduceMotion ? { flap: 0, rise: 0, exit: 300, done: 700 } : { flap: 380, rise: 1150, exit: 2550, done: 3500 };
+    const T = reduceMotion ? { flap: 0, rise: 0, exit: 300, done: 700 } : { flap: 700, rise: 2100, exit: 4700, done: 6400 };
     intro.classList.add("opening");
     env.classList.add("opening");
     if (!reduceMotion) for (let i = 0; i < 16; i++) {
@@ -254,6 +257,20 @@
     requestAnimationFrame(() => searchCard.classList.add("in"));
   }
 
+  // "I haven't RSVP'd yet" / "I already RSVP'd": returning guests go straight to the details once we find their answer
+  let mode = "new";
+  const LEADS = {
+    new: "Search your first or last name to confirm your attendance.",
+    done: "Welcome back! Search your name and we'll take you straight to the wedding details.",
+  };
+  $$(".mode__btn").forEach((b) => b.addEventListener("click", () => {
+    mode = b.dataset.mode;
+    Sound.tap();
+    $$(".mode__btn").forEach((x) => x.setAttribute("aria-checked", String(x === b)));
+    $("#lead").textContent = LEADS[mode];
+    search.focus();
+  }));
+
   let debounce, searchSeq = 0;
   search.addEventListener("input", () => {
     clearTimeout(debounce);
@@ -272,10 +289,10 @@
       return;
     }
     if (seq !== searchSeq) return; // a newer search is running
-    renderResults(q, found);
+    renderResults(q, found.results, found.more);
   }
 
-  function renderResults(q, found) {
+  function renderResults(q, found, more) {
     results.innerHTML = "";
     if (!found.length) {
       results.innerHTML = `<li class="empty">No invitation found for “${escapeHtml(q)}”.<br>Try your last name or check the spelling.</li>`;
@@ -297,11 +314,23 @@
       li.addEventListener("keydown", (e) => e.key === "Enter" && open());
       results.appendChild(li);
     });
+    if (more) results.insertAdjacentHTML("beforeend", `<li class="empty">More invitations match “${escapeHtml(q)}”.<br>Add your first name to find yours, e.g. “Joyce Aquino”.</li>`);
   }
 
   let picks = {}; // guest id -> "yes" | "no"
 
   function openInvite(g) {
+    if (mode === "done") {
+      const me = g.guests.find((x) => x.name === g.hit) || null;
+      const answered = me ? !!me.status : g.guests.some((x) => x.status);
+      if (answered) { // their RSVP is in: skip straight to the details
+        Sound.chime();
+        current = g;
+        rememberGroup(g);
+        showSite(loadRsvp());
+        return;
+      }
+    }
     Sound.chime();
     current = g; picks = {};
     showCard(invite);
@@ -312,6 +341,9 @@
     $("#seatIcons").innerHTML = g.guests.map((_, i) => `<i style="animation-delay:${.4 + i * .1}s"></i>`).join("");
     $("#formError").hidden = true;
     $("#message").value = "";
+    const note = $("#inviteNote");
+    note.hidden = mode !== "done";
+    note.textContent = `We don't have ${g.hit ? `${g.hit.split(" ")[0]}'s` : "your"} RSVP yet, so please answer below. It only takes a moment!`;
 
     const pending = g.guests.filter((x) => !x.status);
     const allDone = !pending.length;
@@ -321,9 +353,10 @@
     $("#questionHint").hidden = allDone || n === 1;
 
     // who is answering: the searched name, else the first person not yet answered
-    const me = g.hit || pending.concat(g.guests)[0].name;
-    $("#answeredBy").innerHTML = g.guests.map((x) => `<option${x.name === me ? " selected" : ""}>${escapeHtml(x.name)}</option>`).join("");
-    $(".as").hidden = n === 1;
+    const named = g.guests.filter((x) => !isExtra(x.name));
+    const me = g.hit || (named.find((x) => !x.status) || named[0] || g.guests[0]).name;
+    $("#answeredBy").innerHTML = named.map((x) => `<option${x.name === me ? " selected" : ""}>${escapeHtml(x.name)}</option>`).join("");
+    $(".as").hidden = named.length <= 1;
 
     if (allDone) rememberGroup(g);
     renderPeople();
@@ -339,12 +372,12 @@
       if (x.status) {
         const yes = x.status === ATTENDING;
         const by = x.answeredBy && x.answeredBy !== x.name ? `<small>answered by ${escapeHtml(x.answeredBy)}</small>` : "";
-        return `<li class="person done"><span class="person__name">${escapeHtml(x.name)}${table}${by}</span>
+        return `<li class="person done"><span class="person__name">${escapeHtml(label(x))}${table}${by}</span>
           <span class="badge ${yes ? "badge--yes" : "badge--no"}">${yes ? "✓ Attending" : "Can't attend"}</span></li>`;
       }
       const p = picks[x.id];
-      return `<li class="person"><span class="person__name">${escapeHtml(x.name)}${p ? "" : `<small>not answered yet</small>`}</span>
-        <span class="seg" role="radiogroup" aria-label="${escapeHtml(x.name)}">
+      return `<li class="person${isExtra(x.name) ? " extra" : ""}"><span class="person__name">${escapeHtml(label(x))}${p ? "" : `<small>${isExtra(x.name) ? "a seat reserved for one more guest" : "not answered yet"}</small>`}</span>
+        <span class="seg" role="radiogroup" aria-label="${escapeHtml(label(x))}">
           <button data-id="${escapeHtml(x.id)}" data-a="yes" role="radio" aria-checked="${p === "yes"}">Attending</button>
           <button data-id="${escapeHtml(x.id)}" data-a="no" role="radio" aria-checked="${p === "no"}">Can't attend</button>
         </span></li>`;
@@ -398,7 +431,7 @@
     Sound.tap();
     $("#confirmList").innerHTML = current.guests.filter((x) => picks[x.id]).map((x) => {
       const yes = picks[x.id] === "yes";
-      return `<li><span>${escapeHtml(x.name)}</span><b class="${yes ? "yes" : "no"}">${yes ? "✓ Attending" : "Can't attend"}</b></li>`;
+      return `<li><span>${escapeHtml(label(x))}</span><b class="${yes ? "yes" : "no"}">${yes ? "✓ Attending" : "Can't attend"}</b></li>`;
     }).join("");
     confirmBox.hidden = false;
     requestAnimationFrame(() => confirmBox.classList.add("open"));
@@ -428,7 +461,14 @@
     let res;
     try { res = await apiRsvp(payload); } catch { res = { ok: false, code: "network" }; }
 
-    if (res.ok) {
+    if (res.ok && !(res.savedIds || []).length) {
+      // everyone they answered for was answered by someone else a moment earlier: show the latest answers instead
+      openInvite({ ...res.group, hit: current.hit });
+      Sound.error();
+      const note = $("#inviteNote");
+      note.textContent = `${(res.skipped || []).join(", ")} ${res.skipped && res.skipped.length > 1 ? "were" : "was"} just answered by someone else. Their answers are shown below.`;
+      note.hidden = false;
+    } else if (res.ok) {
       current = { ...res.group, hit: current.hit };
       picks = {};
       rememberGroup(current);
@@ -460,11 +500,11 @@
 
   function showThanks(g, res) {
     showCard(thanks);
-    const saved = g.guests.filter((x) => res.saved.includes(x.name));
+    const saved = g.guests.filter((x) => (res.savedIds || []).includes(x.id));
     const coming = saved.filter((x) => x.status === ATTENDING);
-    const pending = g.guests.filter((x) => !x.status);
+    const pending = g.guests.filter((x) => !x.status && !isExtra(x.name));
     const lines = [];
-    if (coming.length) lines.push(`<strong>${coming.length}</strong> guest${plural(coming.length)} confirmed: ${coming.map((x) => escapeHtml(x.name)).join(", ")}.`);
+    if (coming.length) lines.push(`<strong>${coming.length}</strong> guest${plural(coming.length)} confirmed: ${coming.map((x) => escapeHtml(label(x))).join(", ")}.`);
     if (res.skipped && res.skipped.length) lines.push(`<span class="small muted">${res.skipped.map(escapeHtml).join(", ")} had already been answered by someone else.</span>`);
     if (pending.length) lines.push(`<span class="small muted">${pending.map((x) => escapeHtml(x.name)).join(", ")} can search their name anytime to answer.</span>`);
 
@@ -499,7 +539,7 @@
     $("#myRsvp").innerHTML = `<li class="my-title">${escapeHtml(r.invitation)}</li>` + r.guests.map((x) => {
       const st = x.status === ATTENDING ? "✓ Attending" : x.status ? "Can't attend" : "Not answered yet";
       const table = x.table && x.status === ATTENDING ? ` · Table ${escapeHtml(x.table)}` : "";
-      return `<li><span>${escapeHtml(x.name)}</span><small>${st}${table}</small></li>`;
+      return `<li><span>${escapeHtml(label(x))}</span><small>${st}${table}</small></li>`;
     }).join("");
   }
 
@@ -565,7 +605,7 @@
     console.info("[RSVP] Demo mode — set scriptUrl in config.js to use the Google Sheet.");
     const tag = document.createElement("div");
     tag.className = "demo-tag";
-    tag.textContent = "Demo mode · sample names · answers are not saved";
+    tag.textContent = "Preview mode · answers are not saved";
     document.body.appendChild(tag);
   }
 })();

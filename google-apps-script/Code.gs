@@ -6,7 +6,8 @@
  *
  * - Invitation: same text for everyone on one invitation. Guests see it as the
  *   card title, e.g. "The Aquino Family" or "Cristina, RB & Winnie".
- * - Guest Name: the person's full name (one seat each).
+ * - Guest Name: the person's full name (one seat each). For an unnamed extra seat
+ *   type "One additional seat": guests see it as "Additional guest" and it isn't searchable.
  * - Table: fill in later when you arrange seating; guests will see it.
  * - Leave ID blank (filled automatically). Status / Answered By / Message /
  *   Responded At are written by the website.
@@ -18,7 +19,7 @@
 const SHEET_NAME = 'Guests';
 const DEADLINE = new Date('2026-10-30T23:59:59+08:00');
 const MIN_CHARS = 3;
-const MAX_RESULTS = 5;
+const MAX_RESULTS = 8;
 const MAX_MESSAGE = 300;
 const ATTENDING = 'Attending';
 const NOT_ATTENDING = 'Not attending';
@@ -63,12 +64,11 @@ function search_(q) {
   const results = [];
   for (const key of Object.keys(groups)) {
     const rows = groups[key];
-    const hitRow = rows.find(r => matches(r.name));
+    const hitRow = rows.find(r => !isExtra_(r.name) && matches(r.name));
     if (!hitRow && !matches(key)) continue;
     results.push(publicGroup_(key, rows, hitRow ? hitRow.name : null));
-    if (results.length >= MAX_RESULTS) break;
   }
-  return { ok: true, closed: isClosed_(), results: results };
+  return { ok: true, closed: isClosed_(), results: results.slice(0, MAX_RESULTS), more: results.length > MAX_RESULTS };
 }
 
 // ---------- rsvp: answer some or all names on one invitation ----------
@@ -86,7 +86,7 @@ function rsvp_(p) {
     const rows = table.rows.filter(r => r.invitation === key && r.name);
     if (!rows.length) return { ok: false, code: 'notfound' };
 
-    const answeredBy = rows.some(r => r.name === p.answeredBy) ? p.answeredBy : '';
+    const answeredBy = rows.some(r => r.name === p.answeredBy && !isExtra_(r.name)) ? p.answeredBy : '';
     const message = safeText_(String(p.message || '').trim().slice(0, MAX_MESSAGE));
     const now = new Date();
     const saved = [], skipped = [];
@@ -111,7 +111,7 @@ function rsvp_(p) {
     });
     SpreadsheetApp.flush();
 
-    return { ok: true, saved: saved.map(r => r.name), skipped: skipped, group: publicGroup_(key, rows, null) };
+    return { ok: true, savedIds: saved.map(r => String(r.id)), skipped: skipped.map(n => isExtra_(n) ? 'Additional guest' : n), group: publicGroup_(key, rows, null) };
   } finally {
     lock.releaseLock();
   }
@@ -178,6 +178,11 @@ function publicGroup_(key, rows, hit) {
       id: String(r.id), name: r.name, status: r.status, answeredBy: r.answeredBy, table: r.table
     }))
   };
+}
+
+// unnamed seats such as "One additional seat"
+function isExtra_(name) {
+  return /^(one\s+)?(additional|extra)\s+(seat|guest)s?$|^plus\s*one$|^\+\s*1$/i.test(String(name).trim());
 }
 
 function norm_(s) {

@@ -117,7 +117,7 @@ h2.script { font-size: clamp(2.4rem, 9vw, 3.4rem); color: var(--bark); line-heig
 
 .envelope {
   position: relative; width: min(84vw, 340px); aspect-ratio: 1.45; margin: 0 auto;
-  perspective: 1100px; transform-style: preserve-3d;
+  perspective: 1100px;
   animation: fadeUp 1.2s .5s both, float 4.5s 1.7s ease-in-out infinite;
 }
 .envelope.opening { animation-play-state: paused; }
@@ -133,14 +133,14 @@ h2.script { font-size: clamp(2.4rem, 9vw, 3.4rem); color: var(--bark); line-heig
   clip-path: polygon(0 0, 100% 0, 50% 58%);
   transform-origin: 50% 0; z-index: 4; backface-visibility: visible;
   /* z-index drops behind the card exactly when the flap passes upright */
-  transition: transform 1s cubic-bezier(.45, 0, .2, 1), filter 1s, z-index 0s .5s;
+  transition: transform 1.5s cubic-bezier(.45, 0, .25, 1), filter 1.5s, z-index 0s .75s;
 }
 .envelope__letter {
   position: absolute; left: 7%; right: 7%; top: 8%; bottom: 8%; z-index: 2;
   background: var(--paper) var(--grain); border-radius: 6px;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .1rem;
   color: var(--bark); box-shadow: 0 -2px 10px rgba(0, 0, 0, .08);
-  transition: transform 1.3s cubic-bezier(.22, 1, .36, 1), box-shadow 1.3s;
+  transition: transform 1.9s cubic-bezier(.22, 1, .36, 1), box-shadow 1.9s;
 }
 .letter__small { font-family: var(--sans); font-size: .58rem; font-weight: 700; letter-spacing: .3em; text-transform: uppercase; color: var(--terracotta); }
 .letter__names { display: flex; align-items: baseline; gap: .35rem; font-size: 2rem; line-height: 1.2; }
@@ -161,15 +161,15 @@ h2.script { font-size: clamp(2.4rem, 9vw, 3.4rem); color: var(--bark); line-heig
 .seal span { display: grid; place-items: center; width: 52px; height: 52px; margin: auto; border: 1.5px solid rgba(241, 211, 191, .5); border-radius: 50%; }
 
 /* opening sequence (classes added one after another by app.js) */
-.envelope.opening .seal { animation: sealOff .55s cubic-bezier(.5, 0, .7, .4) forwards; pointer-events: none; }
+.envelope.opening .seal { animation: sealOff .8s cubic-bezier(.5, 0, .7, .4) forwards; pointer-events: none; }
 .envelope.opening .seal::after { animation: none; opacity: 0; }
 .envelope.flap .envelope__flap { transform: rotateX(180deg); z-index: 1; filter: brightness(.88); }
 .envelope.rise .envelope__letter { transform: translateY(-62%) scale(1.04); box-shadow: 0 14px 30px rgba(0, 0, 0, .28); }
 .envelope.rise .envelope__back { box-shadow: 0 30px 50px rgba(0, 0, 0, .3); }
-.intro.opening .intro__hint, .intro.opening .intro__kicker { opacity: 0 !important; transform: translateY(8px); transition: opacity .5s, transform .5s; animation: none; }
-.intro__inner { transition: transform 1.1s cubic-bezier(.6, 0, .35, 1), opacity 1s ease, filter 1s ease; }
+.intro.opening .intro__hint, .intro.opening .intro__kicker { opacity: 0 !important; transform: translateY(8px); transition: opacity .8s, transform .8s; animation: none; }
+.intro__inner { transition: transform 1.6s cubic-bezier(.6, 0, .35, 1), opacity 1.4s ease, filter 1.4s ease; }
 .intro.exit .intro__inner { transform: scale(1.22) translateY(-3%); opacity: 0; filter: blur(4px); }
-.intro { transition: opacity 1.1s ease .15s, visibility 1.25s; }
+.intro { transition: opacity 1.5s ease .25s, visibility 1.75s; }
 
 @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
 @keyframes ripple { 0% { transform: scale(.9); opacity: .8; } 100% { transform: scale(1.5); opacity: 0; } }
@@ -883,3 +883,24 @@ h2.script.reveal.in::after { transform: none; clip-path: inset(0 0 0 0); }
   .gallery { grid-template-columns: 1fr 1fr; max-width: 860px; gap: 28px; align-items: center; }
   .gallery__photo--night { margin-top: 40px; }
 }
+
+/* ============ Divider between Gift/Snap and the photos ============ */
+.section-divider { display: flex; align-items: center; gap: 14px; max-width: 560px; margin: 12px auto; padding: 0 16px; }
+.section-divider::before, .section-divider::after { content: ""; flex: 1; height: 1px; }
+.section-divider::before { background: linear-gradient(90deg, transparent, var(--gold)); }
+.section-divider::after { background: linear-gradient(90deg, var(--gold), transparent); }
+.section-divider span { flex: none; width: 150px; height: 24px; background: var(--orn-divider) center / contain no-repeat; }
+
+/* ============ Photos with a playful title ============ */
+.gallery { padding-top: 48px; }
+.gallery__head { grid-column: 1 / -1; margin-bottom: 18px; }
+.gallery__lead { max-width: 440px; margin: 0 auto; font-family: var(--serif); font-size: 1.15rem; line-height: 1.55; color: var(--bark); }
+
+/* ============ "I haven't RSVP'd yet" / "I already RSVP'd" ============ */
+.mode { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; margin: .4rem 0 .9rem; border-radius: 999px; background: var(--blush); }
+.mode__btn {
+  border: 0; border-radius: 999px; padding: 11px 8px; background: transparent;
+  font-size: .78rem; font-weight: 700; letter-spacing: .02em; color: var(--walnut); transition: background .25s, color .25s, box-shadow .25s;
+}
+.mode__btn[aria-checked="true"] { background: linear-gradient(135deg, var(--walnut), var(--terracotta)); color: var(--cream); box-shadow: 0 4px 12px rgba(185, 115, 79, .3); }
+.invite-note { margin: -.2rem 0 1rem; padding: 10px 14px; border-radius: 12px; background: rgba(241, 223, 214, .7); color: var(--walnut); font-size: .9rem; line-height: 1.45; }

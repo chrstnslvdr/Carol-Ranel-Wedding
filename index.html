@@ -48,7 +48,11 @@
       <div class="twig" aria-hidden="true"></div>
       <p class="kicker">Kindly confirm your attendance</p>
       <h1 class="script gate__title">Find your name</h1>
-      <p class="muted lead">Search your first or last name to confirm your attendance.</p>
+      <div class="mode" role="radiogroup" aria-label="Have you sent your RSVP?">
+        <button type="button" class="mode__btn" data-mode="new" role="radio" aria-checked="true">I haven't RSVP'd yet</button>
+        <button type="button" class="mode__btn" data-mode="done" role="radio" aria-checked="false">I already RSVP'd</button>
+      </div>
+      <p class="muted lead" id="lead">Search your first or last name to confirm your attendance.</p>
 
       <div class="search">
         <svg class="search__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 3a7.5 7.5 0 0 1 5.96 12.06l4.24 4.24-1.4 1.4-4.24-4.24A7.5 7.5 0 1 1 10.5 3Zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11Z"/></svg>
@@ -64,7 +68,6 @@
         <p>As much as we adore your little ones, our celebration will be <strong>adults only</strong>. Thank you for understanding!</p>
       </div>
 
-      <p class="small muted already">Already sent your RSVP? Just search your name again to see your answers and the wedding details.</p>
 
       <div class="help">
         <p class="muted">Can't find your name? Call or message us:</p>
@@ -98,6 +101,7 @@
       <div id="seatIcons" class="seat-icons" aria-hidden="true"></div>
 
       <p class="question" id="question">Who will be celebrating with us?</p>
+      <p class="invite-note" id="inviteNote" hidden></p>
       <p class="small muted hint" id="questionHint">Answer for yourself and anyone you know.<br />Leave the rest blank so they can answer themselves.</p>
       <ul id="people" class="people"></ul>
 
@@ -266,12 +270,20 @@
       <!-- Guests -->
       <div class="attire-group">
         <p class="attire-group__title reveal">For our guests</p>
-        <div class="attire-grid">
-          <article class="paper attire-card reveal">
+        <div class="attire-grid attire-grid--entourage">
+          <article class="paper attire-card attire-card--figs reveal">
+            <div class="attire-figs">
+              <img src="assets/dress-code/guest-female-1.webp" alt="One-shoulder dress in light brown" loading="lazy" />
+              <img src="assets/dress-code/guest-female-2.webp" alt="Brown blazer with cream top and trousers" loading="lazy" />
+            </div>
             <h3>Ladies</h3>
             <p>A formal dress or formal outfit in colors that match our wedding theme.</p>
           </article>
-          <article class="paper attire-card reveal">
+          <article class="paper attire-card attire-card--figs reveal">
+            <div class="attire-figs">
+              <img src="assets/dress-code/guest-male-1.webp" alt="Long-sleeved white shirt with brown trousers" loading="lazy" />
+              <img src="assets/dress-code/guest-male-2.webp" alt="Brown polo shirt with cream trousers" loading="lazy" />
+            </div>
             <h3>Gentlemen</h3>
             <p>A long-sleeved polo or formal polo shirt in colors that match our wedding theme.</p>
           </article>
@@ -302,15 +314,6 @@
       </div>
     </section>
 
-    <section class="section gallery">
-      <div class="gallery__photo reveal">
-        <img src="assets/photos/photo-3.jpg" alt="Carol and Ranel at Hong Kong Disneyland" data-placeholder="Photo 3" loading="lazy" />
-      </div>
-      <div class="gallery__photo gallery__photo--night reveal">
-        <img src="assets/photos/photo-4.jpg" alt="Carol and Ranel in front of the castle at night" data-placeholder="Photo 4" loading="lazy" />
-      </div>
-    </section>
-
     <section class="section notes">
       <article class="paper detail reveal">
         <div class="detail__icon" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="18" width="32" height="8" rx="1.5"/><path d="M11 26v15h26V26"/><path d="M24 18v23"/><path d="M24 18c-3-6-11-8-11-3 0 3 6 3 11 3zM24 18c3-6 11-8 11-3 0 3-6 3-11 3z"/></svg></div>
@@ -324,6 +327,22 @@
         <p>We'd love to see your favorite moments from our special day! Tag us and use our wedding hashtag:</p>
         <button class="hashtag" id="hashtag" aria-label="Copy hashtag">#CarolAndRanelWedding <span>copy</span></button>
       </article>
+    </section>
+
+    <div class="section-divider reveal" aria-hidden="true"><span></span></div>
+
+    <section class="section gallery">
+      <div class="gallery__head">
+        <p class="kicker reveal">Our little adventures</p>
+        <h2 class="script reveal">A little bit of magic</h2>
+        <p class="gallery__lead reveal">Every love story is special, but ours came with castles, fireworks and a whole lot of joy. Here's to our happily ever after!</p>
+      </div>
+      <div class="gallery__photo reveal">
+        <img src="assets/photos/photo-3.jpg" alt="Carol and Ranel at Hong Kong Disneyland" data-placeholder="Photo 3" loading="lazy" />
+      </div>
+      <div class="gallery__photo gallery__photo--night reveal">
+        <img src="assets/photos/photo-4.jpg" alt="Carol and Ranel in front of the castle at night" data-placeholder="Photo 4" loading="lazy" />
+      </div>
     </section>
 
     <section class="section faq">

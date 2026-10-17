@@ -20,7 +20,7 @@ Guest's phone ──search name──▶ Google Apps Script ──reads──▶
    | ID | Invitation | Guest Name | Status | Answered By | Message | Responded At | Table |
    |----|------------|------------|--------|-------------|---------|--------------|-------|
 
-   *(Or File → Import → upload `google-apps-script/guest-list-template.csv`.)*
+   *Easiest: File → Import → Upload your guest list CSV → "Replace current sheet", then rename the tab to `Guests`.*
 4. Fill in **Invitation** and **Guest Name** for every guest:
 
    | Invitation | Guest Name |
@@ -36,11 +36,14 @@ Guest's phone ──search name──▶ Google Apps Script ──reads──▶
    - Seats = number of names in the invitation (counted automatically).
    - Leave **ID, Status, Answered By, Message, Responded At** empty. The website fills them in.
    - **Table**: leave empty for now. When you arrange seating after the RSVPs, type the table number and guests will see it on the site.
+   - **Extra unnamed seat**: add a row with Guest Name `One additional seat`. Guests see it as "Additional guest", it can't be searched, and whoever answers for the invitation answers for it.
 
 **How guests answer**
 - Searching any name opens the shared invitation with every name listed.
 - They can answer for themselves and anyone else on it, and leave the rest for those people to answer later.
 - An answered name is locked. To change it, clear that person's **Status** cell (or type the new answer yourself).
+
+**Watching RSVPs live:** open the sheet in Google Drive (computer or the Google Sheets app). Each answer appears in its row within seconds: Status, who answered, their message and the time. You don't need to refresh; Google Sheets updates on its own.
 
 **Handy formulas** (put them in another tab):
 - Attending: `=COUNTIF(Guests!D:D,"Attending")`
