@@ -6,7 +6,7 @@
   const DEADLINE = new Date(CFG.rsvpDeadline || "2026-10-30T23:59:59+08:00");
   const API = (CFG.scriptUrl || "").trim();
   const DEMO = !API;
-  const STORAGE_KEY = "cr-wedding-rsvp";
+  const STORAGE_KEY = DEMO ? "cr-wedding-rsvp-preview" : "cr-wedding-rsvp-live"; // preview answers never carry over to the live site
   const MIN_CHARS = 3;
   const MAX_RESULTS = 8;
 
