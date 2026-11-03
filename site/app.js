@@ -3,7 +3,7 @@
 
   const CFG = window.WEDDING_CONFIG || {};
   const WEDDING_DATE = new Date(CFG.weddingDate || "2026-11-14T14:30:00+08:00");
-  const DEADLINE = new Date(CFG.rsvpDeadline || "2026-10-30T23:59:59+08:00");
+  const DEADLINE = new Date(CFG.rsvpDeadline || "2026-11-08T23:59:59+08:00");
   const API = (CFG.scriptUrl || "").trim();
   const DEMO = !API;
   const STORAGE_KEY = DEMO ? "cr-wedding-rsvp-preview" : "cr-wedding-rsvp-live"; // preview answers never carry over to the live site

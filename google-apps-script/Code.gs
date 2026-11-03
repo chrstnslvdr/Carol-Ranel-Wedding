@@ -17,7 +17,7 @@
  */
 
 const SHEET_NAME = 'Guests';
-const DEADLINE = new Date('2026-10-30T23:59:59+08:00');
+const DEADLINE = new Date('2026-11-08T23:59:59+08:00');
 const MIN_CHARS = 3;
 const MAX_RESULTS = 8;
 const MAX_MESSAGE = 300;

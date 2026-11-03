@@ -70,4 +70,4 @@ From then on every change pushed to that branch re-publishes automatically. Chan
 
 - [ ] On your phone: search a test name, send an RSVP, check the sheet updates, then clear that row's Status.
 - [ ] Make the QR code on the invitation point to `https://carol-and-ranel.netlify.app`.
-- [ ] RSVP closes automatically after **Oct 30, 2026** (set in `site/config.js` and `google-apps-script/Code.gs`).
+- [ ] RSVP closes automatically after **Nov 8, 2026** (set in `site/config.js` and `google-apps-script/Code.gs`).
